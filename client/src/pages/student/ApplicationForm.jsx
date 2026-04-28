@@ -88,6 +88,8 @@ export default function ApplicationForm() {
   const watchedCollegeId = watch('collegeId');
   const watchedRouteId = watch('routeId');
   const watchedPaymentType = watch('paymentType');
+  const watchedAcademicYear = watch('academicYear');
+  const aadhaarRequired = role === 'faculty' || watchedAcademicYear === '1';
 
   const { data: myApps = [], isLoading: appsLoading } = useQuery({
     queryKey: ['my-applications'],
@@ -263,8 +265,17 @@ export default function ApplicationForm() {
                       {errors.branch && <p className="text-red-500 text-xs mt-1">{errors.branch.message}</p>}
                     </div>
                     <div>
-                      <label className="label">Aadhaar Number <span className="text-gray-400">(optional)</span></label>
-                      <input {...register('aadhaar')} placeholder="XXXX XXXX XXXX" className="input" />
+                      <label className="label">
+                        Aadhaar Number {aadhaarRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
+                      </label>
+                      <input
+                        {...register('aadhaar', {
+                          validate: v => !aadhaarRequired || (v && v.trim().length >= 12) || 'Aadhaar number is required (12 digits)',
+                        })}
+                        placeholder="XXXX XXXX XXXX"
+                        className={`input ${errors.aadhaar ? 'input-error' : ''}`}
+                      />
+                      {errors.aadhaar && <p className="text-red-500 text-xs mt-1">{errors.aadhaar.message}</p>}
                     </div>
                   </div>
                   <div className="mt-4">
