@@ -54,7 +54,7 @@ export default function ApplicationForm() {
     branch: '',
     parentName: userProfile?.parentName || '',
     parentPhone: userProfile?.parentPhone || '',
-    studentPhone: userProfile?.studentPhone || '',
+    studentPhone: userProfile?.studentPhone || userProfile?.phone || '',
     emergencyContact: userProfile?.emergencyContact || '',
     collegeId: userProfile?.collegeId || '',
     routeId: '',
@@ -78,7 +78,7 @@ export default function ApplicationForm() {
         address: userProfile.address || prev.address,
         parentName: userProfile.parentName || prev.parentName,
         parentPhone: userProfile.parentPhone || prev.parentPhone,
-        studentPhone: userProfile.studentPhone || prev.studentPhone,
+        studentPhone: userProfile.studentPhone || userProfile.phone || prev.studentPhone,
         emergencyContact: userProfile.emergencyContact || prev.emergencyContact,
         collegeId: userProfile.collegeId || prev.collegeId,
       }));
@@ -300,12 +300,15 @@ export default function ApplicationForm() {
                     {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
                   </div>
                   <div className="mt-4">
-                    <label className="label">Select College *</label>
-                    <select {...register('collegeId')} className={`input ${errors.collegeId ? 'input-error' : ''}`}>
-                      <option value="">-- Select College --</option>
-                      {colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                    {errors.collegeId && <p className="text-red-500 text-xs mt-1">{errors.collegeId.message}</p>}
+                    <label className="label">College</label>
+                    <input
+                      value={selectedCollege?.name || colleges.find(c => c.id === userProfile?.collegeId)?.name || ''}
+                      readOnly
+                      disabled
+                      className="input bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                    <input type="hidden" {...register('collegeId')} />
+                    <p className="text-xs text-gray-400 mt-1">College is set from your registration and cannot be changed.</p>
                   </div>
                 </div>
 
