@@ -20,7 +20,7 @@ const schema = z.object({
   bloodGroup: z.string().min(1, 'Blood group required'),
   academicYear: z.string().min(1, 'Academic year required'),
   address: z.string().min(5, 'Address required'),
-  regNo: z.string().min(2, 'Registration number required'),
+  regNo: z.string().optional(),
   aadhaar: z.string().optional(),
   branch: z.string().min(1, 'Branch required'),
   parentName: z.string().min(2, 'Parent/Guardian name required'),
@@ -89,7 +89,9 @@ export default function ApplicationForm() {
   const watchedRouteId = watch('routeId');
   const watchedPaymentType = watch('paymentType');
   const watchedAcademicYear = watch('academicYear');
-  const aadhaarRequired = role === 'faculty' || watchedAcademicYear === '1';
+  const isFirstYear = watchedAcademicYear === '1';
+  const aadhaarRequired = role === 'faculty' || isFirstYear;
+  const regNoRequired = role !== 'faculty' && !isFirstYear;
 
   const { data: myApps = [], isLoading: appsLoading } = useQuery({
     queryKey: ['my-applications'],
@@ -255,9 +257,18 @@ export default function ApplicationForm() {
                       {errors.academicYear && <p className="text-red-500 text-xs mt-1">{errors.academicYear.message}</p>}
                     </div>
                     <div>
-                      <label className="label">Registration Number *</label>
-                      <input {...register('regNo')} placeholder="e.g. 20CS001" className={`input ${errors.regNo ? 'input-error' : ''}`} />
+                      <label className="label">
+                        Registration Number {regNoRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
+                      </label>
+                      <input
+                        {...register('regNo', {
+                          validate: v => !regNoRequired || (v && v.trim().length >= 2) || 'Registration number is required',
+                        })}
+                        placeholder="e.g. 20CS001"
+                        className={`input ${errors.regNo ? 'input-error' : ''}`}
+                      />
                       {errors.regNo && <p className="text-red-500 text-xs mt-1">{errors.regNo.message}</p>}
+                      {isFirstYear && <p className="text-xs text-amber-600 mt-1">1st year students can fill this later after receiving their roll number.</p>}
                     </div>
                     <div>
                       <label className="label">Branch / Department *</label>
