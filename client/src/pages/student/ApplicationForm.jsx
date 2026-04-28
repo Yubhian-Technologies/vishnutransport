@@ -62,7 +62,7 @@ export default function ApplicationForm() {
     paymentType: 'full',
   };
 
-  const { register, handleSubmit, watch, control, formState: { errors }, getValues, reset } = useForm({
+  const { register, handleSubmit, watch, control, formState: { errors }, getValues, reset, trigger, clearErrors } = useForm({
     resolver: zodResolver(schema),
     defaultValues: profileDefaults,
   });
@@ -92,6 +92,11 @@ export default function ApplicationForm() {
   const isFirstYear = watchedAcademicYear === '1';
   const aadhaarRequired = role === 'faculty' || isFirstYear;
   const regNoRequired = role !== 'faculty' && !isFirstYear;
+
+  useEffect(() => {
+    clearErrors(['regNo', 'aadhaar']);
+    if (watchedAcademicYear) trigger(['regNo', 'aadhaar']);
+  }, [watchedAcademicYear]);
 
   const { data: myApps = [], isLoading: appsLoading } = useQuery({
     queryKey: ['my-applications'],
