@@ -142,9 +142,10 @@ export default function RouteManagement() {
                     <Bus size={20} className="text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{route.routeName}</h3>
                       {route.routeNumber && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{route.routeNumber}</span>}
+                      {route.busNumber && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium">Bus: {route.busNumber}</span>}
                     </div>
                     <p className="text-xs text-gray-500">{route.startPoint} → {route.endPoint}</p>
                   </div>
