@@ -19,13 +19,9 @@ const STATUS_TABS = [
 ];
 
 const DUE_FILTER_OPTIONS = [
-  { label: 'All Payment Types', value: '' },
-  { label: 'Full Payment Only', value: 'full' },
-  { label: 'Has Due Amount', value: 'has_due' },
-  { label: 'Due: Pending Upload', value: 'pending_upload' },
-  { label: 'Due: Under Review', value: 'pending_verification' },
-  { label: 'Due: Verified', value: 'verified' },
-  { label: 'Due: Rejected', value: 'rejected' },
+  { label: 'Payment Status', value: '' },
+  { label: 'Full Payment', value: 'full' },
+  { label: 'Due Amount', value: 'has_due' },
 ];
 
 export default function ApplicationReview() {
@@ -204,7 +200,7 @@ export default function ApplicationReview() {
           <select
             value={dueFilter}
             onChange={e => setDueFilter(e.target.value)}
-            className="input text-sm w-52"
+            className="input text-sm w-44"
           >
             {DUE_FILTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
