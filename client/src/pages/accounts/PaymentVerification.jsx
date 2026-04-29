@@ -4,7 +4,7 @@ import Layout from '../../components/common/Layout';
 import StatusBadge from '../../components/common/StatusBadge';
 import Modal from '../../components/common/Modal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { applicationsAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI } from '../../utils/api';
 import { formatCurrency, formatDateTime, exportToCSV } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import { CheckCircle2, XCircle, Eye, Download, ExternalLink } from 'lucide-react';
@@ -34,6 +34,16 @@ export default function PaymentVerification() {
       ? applicationsAPI.getAll({ status: 'approved_final' })
       : applicationsAPI.getAll({ status: statusFilter }),
   });
+
+  const { data: routesData } = useQuery({
+    queryKey: ['routes-all'],
+    queryFn: () => routesAPI.getAll(),
+  });
+
+  const busNumberMap = React.useMemo(() => {
+    const routes = Array.isArray(routesData) ? routesData : [];
+    return Object.fromEntries(routes.map(r => [r.id, r.busNumber]));
+  }, [routesData]);
 
   const approveMutation = useMutation({
     mutationFn: (id) => applicationsAPI.accountsReview(id, { action: 'approve' }),
@@ -101,6 +111,7 @@ export default function PaymentVerification() {
             <table className="table">
               <thead>
                 <tr>
+                  <th>S.No.</th>
                   <th>Applicant</th>
                   <th>College</th>
                   <th>Route</th>
@@ -113,9 +124,10 @@ export default function PaymentVerification() {
               </thead>
               <tbody>
                 {apps.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-8 text-gray-400">No applications found</td></tr>
-                ) : apps.map(app => (
+                  <tr><td colSpan={9} className="text-center py-8 text-gray-400">No applications found</td></tr>
+                ) : apps.map((app, idx) => (
                   <tr key={app.id}>
+                    <td className="text-sm text-gray-500 text-center">{idx + 1}</td>
                     <td>
                       <p className="font-medium">{app.name}</p>
                       <p className="text-xs text-gray-400">{app.regNo}</p>
@@ -127,6 +139,9 @@ export default function PaymentVerification() {
                     <td>
                       <p className="text-sm">{app.routeName}</p>
                       <p className="text-xs text-gray-400">{app.boardingPointName}</p>
+                      {busNumberMap[app.routeId] && (
+                        <p className="text-xs text-indigo-600 font-medium">Bus: {busNumberMap[app.routeId]}</p>
+                      )}
                     </td>
                     <td className="font-semibold text-green-700">
                       {isDueTab
@@ -243,6 +258,7 @@ export default function PaymentVerification() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
                   ['Route', selectedApp.routeName],
+                  ['Bus Number', busNumberMap[selectedApp.routeId] || '—'],
                   ['Boarding Point', selectedApp.boardingPointName],
                   ['Total Fare', formatCurrency(selectedApp.paymentType === 'coordinator_partial' ? (selectedApp.fullFare || selectedApp.fare) : selectedApp.fare)],
                   ['Payment Type', selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : selectedApp.paymentType === 'partial' ? 'Partial' : 'Full'],
