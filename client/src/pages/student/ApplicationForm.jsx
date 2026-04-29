@@ -193,7 +193,25 @@ export default function ApplicationForm() {
     }
   };
 
-  const nextStep = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
+  const STEP_FIELDS = [
+    // Step 0 — Personal Details
+    [
+      'nameAsPerSSC', 'gender', 'bloodGroup', 'address', 'branch',
+      'studentPhone', 'emergencyContact', 'parentName', 'parentPhone',
+      'regNo', 'aadhaar',
+      ...(isFaculty ? ['dateOfJoining'] : ['academicYear']),
+    ],
+    // Step 1 — Route
+    ['routeId', 'boardingPointId'],
+    // Step 2 — Payment (file validated on submit)
+    [],
+  ];
+
+  const nextStep = async () => {
+    const fields = STEP_FIELDS[step];
+    const valid = fields.length === 0 || await trigger(fields);
+    if (valid) setStep(s => Math.min(s + 1, STEPS.length - 1));
+  };
   const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
   if (appsLoading) return <LoadingSpinner fullScreen />;
