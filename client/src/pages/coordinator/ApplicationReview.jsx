@@ -5,7 +5,7 @@ import Layout from '../../components/common/Layout';
 import StatusBadge from '../../components/common/StatusBadge';
 import Modal from '../../components/common/Modal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { applicationsAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI } from '../../utils/api';
 import { formatCurrency, formatDateTime, exportToCSV } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import { CheckCircle2, XCircle, Eye, Download, Search } from 'lucide-react';
@@ -47,6 +47,16 @@ export default function ApplicationReview() {
     queryKey: ['applications', statusFilter],
     queryFn: () => applicationsAPI.getAll({ status: statusFilter }),
   });
+
+  const { data: routesData } = useQuery({
+    queryKey: ['routes-all'],
+    queryFn: () => routesAPI.getAll(),
+  });
+
+  const busNumberMap = useMemo(() => {
+    const routes = Array.isArray(routesData) ? routesData : [];
+    return Object.fromEntries(routes.map(r => [r.id, r.busNumber]));
+  }, [routesData]);
 
   const allApps = data?.data || [];
 
@@ -246,6 +256,9 @@ export default function ApplicationReview() {
                     <td>
                       <p className="text-sm">{app.college}</p>
                       <p className="text-xs text-gray-400">{app.routeName}</p>
+                      {busNumberMap[app.routeId] && (
+                        <p className="text-xs text-indigo-600 font-medium">Bus: {busNumberMap[app.routeId]}</p>
+                      )}
                     </td>
                     <td>
                       {app.paymentType === 'coordinator_partial' ? (
@@ -346,6 +359,7 @@ export default function ApplicationReview() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
                   ['Route', selectedApp.routeName],
+                  ['Bus Number', busNumberMap[selectedApp.routeId] || '—'],
                   ['Boarding Point', selectedApp.boardingPointName],
                   ['Payment Type', (() => { const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
                   ['Total Fare', formatCurrency(selectedApp.fullFare || selectedApp.fare)],
