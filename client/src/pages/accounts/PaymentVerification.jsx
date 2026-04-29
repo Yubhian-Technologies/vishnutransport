@@ -96,8 +96,10 @@ export default function PaymentVerification() {
     .filter(a => !statusFilterInline || (isDueTab ? a.dueStatus === statusFilterInline : a.status === statusFilterInline))
     .filter(a => {
       if (!paymentTypeFilter) return true;
-      if (paymentTypeFilter === 'full') return a.paymentType === 'full';
-      if (paymentTypeFilter === 'due') return a.paymentType === 'partial' || a.paymentType === 'coordinator_partial';
+      const isPartial = a.paymentType === 'partial' || a.paymentType === 'coordinator_partial';
+      const clearedDue = isPartial && a.dueStatus === 'verified';
+      if (paymentTypeFilter === 'full') return a.paymentType === 'full' || clearedDue;
+      if (paymentTypeFilter === 'due') return isPartial && !clearedDue;
       return true;
     });
 
@@ -132,7 +134,7 @@ export default function PaymentVerification() {
               'Bus No.': busNumberMap[a.routeId] || '—',
               'Boarding Point': a.boardingPointName,
               Fare: isDueTab ? a.dueAmount : a.fare,
-              'Payment Type': a.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : a.paymentType === 'partial' ? 'Partial' : 'Full',
+              'Payment Type': (() => { const c = (a.paymentType === 'partial' || a.paymentType === 'coordinator_partial') && a.dueStatus === 'verified'; return a.paymentType === 'full' || c ? 'Full' : a.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })(),
               Status: isDueTab ? a.dueStatus : a.status,
               Submitted: isDueTab ? a.duePaymentSubmittedAt : a.submittedAt,
             })), 'payments')} className="btn-outline text-xs">
@@ -357,7 +359,7 @@ export default function PaymentVerification() {
                   ['Bus Number', busNumberMap[selectedApp.routeId] || '—'],
                   ['Boarding Point', selectedApp.boardingPointName],
                   ['Total Fare', formatCurrency(selectedApp.paymentType === 'coordinator_partial' ? (selectedApp.fullFare || selectedApp.fare) : selectedApp.fare)],
-                  ['Payment Type', selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : selectedApp.paymentType === 'partial' ? 'Partial' : 'Full'],
+                  ['Payment Type', (() => { const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
                   ...(selectedApp.dueAmount > 0 ? [[
                     'Due Amount',
                     selectedApp.dueStatus === 'verified'

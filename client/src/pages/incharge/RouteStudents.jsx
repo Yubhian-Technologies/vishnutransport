@@ -44,7 +44,7 @@ export default function RouteStudents() {
       'Reg No': s.regNo,
       Branch: s.branch,
       'Boarding Point': s.boardingPointName,
-      'Payment Type': s.paymentType,
+      'Payment Type': (() => { const c = (s.paymentType === 'partial' || s.paymentType === 'coordinator_partial') && s.dueStatus === 'verified'; return s.paymentType === 'full' || c ? 'Full' : 'Partial'; })(),
       Fare: s.fare,
     })), `students-${myRoute?.routeName || 'route'}`);
   };
@@ -158,7 +158,7 @@ export default function RouteStudents() {
               {[
                 ['Boarding Point', selectedStudent.boardingPointName],
                 ['Fare', formatCurrency(selectedStudent.fare)],
-                ['Payment Type', selectedStudent.paymentType === 'partial' ? 'Partial' : 'Full'],
+                ['Payment Type', (() => { const c = (selectedStudent.paymentType === 'partial' || selectedStudent.paymentType === 'coordinator_partial') && selectedStudent.dueStatus === 'verified'; return selectedStudent.paymentType === 'full' || c ? 'Full' : 'Partial'; })()],
                 ['Status', <StatusBadge key="s" status={selectedStudent.status} />],
               ].map(([label, value]) => (
                 <div key={label} className="bg-gray-50 p-2.5 rounded-lg">
