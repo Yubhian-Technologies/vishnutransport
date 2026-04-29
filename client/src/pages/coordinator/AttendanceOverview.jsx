@@ -99,6 +99,7 @@ export default function AttendanceOverview() {
               <table className="table">
                 <thead>
                   <tr>
+                    <th>S.No.</th>
                     <th>Student</th>
                     <th>College</th>
                     <th>Route</th>
@@ -108,8 +109,9 @@ export default function AttendanceOverview() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(r => (
+                  {filtered.map((r, idx) => (
                     <tr key={r.id}>
+                      <td className="text-sm text-gray-500 text-center">{idx + 1}</td>
                       <td>
                         <p className="font-medium text-sm">{r.studentName}</p>
                         <p className="text-xs text-gray-400">{r.regNo} · {r.branch}</p>
