@@ -21,6 +21,8 @@ export default function PaymentVerification() {
   const [statusFilter, setStatusFilter] = useState('pending_accounts');
   const [routeFilter, setRouteFilter] = useState('');
   const [collegeFilter, setCollegeFilter] = useState('');
+  const [statusFilterInline, setStatusFilterInline] = useState('');
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectTargetId, setRejectTargetId] = useState(null);
@@ -90,14 +92,21 @@ export default function PaymentVerification() {
 
   const apps = baseApps
     .filter(a => !routeFilter || a.routeId === routeFilter)
-    .filter(a => !collegeFilter || a.college === collegeFilter);
+    .filter(a => !collegeFilter || a.college === collegeFilter)
+    .filter(a => !statusFilterInline || (isDueTab ? a.dueStatus === statusFilterInline : a.status === statusFilterInline))
+    .filter(a => {
+      if (!paymentTypeFilter) return true;
+      if (paymentTypeFilter === 'full') return a.paymentType === 'full';
+      if (paymentTypeFilter === 'due') return a.paymentType === 'partial' || a.paymentType === 'coordinator_partial';
+      return true;
+    });
 
   const collegeOptions = React.useMemo(
     () => [...new Set(baseApps.map(a => a.college).filter(Boolean))].sort(),
     [baseApps]
   );
 
-  const hasFilters = routeFilter || collegeFilter;
+  const hasFilters = routeFilter || collegeFilter || statusFilterInline || paymentTypeFilter;
 
   return (
     <Layout title="Payment Verification">
@@ -154,8 +163,37 @@ export default function PaymentVerification() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
+          <select
+            value={statusFilterInline}
+            onChange={e => setStatusFilterInline(e.target.value)}
+            className="input py-1 text-sm w-auto min-w-[140px]"
+          >
+            <option value="">All Status</option>
+            {isDueTab ? (
+              <>
+                <option value="pending_verification">Pending Verification</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+              </>
+            ) : (
+              <>
+                <option value="pending_accounts">Pending</option>
+                <option value="approved_final">Approved</option>
+                <option value="rejected_l2">Rejected</option>
+              </>
+            )}
+          </select>
+          <select
+            value={paymentTypeFilter}
+            onChange={e => setPaymentTypeFilter(e.target.value)}
+            className="input py-1 text-sm w-auto min-w-[140px]"
+          >
+            <option value="">All Payment Types</option>
+            <option value="full">Full Payment</option>
+            <option value="due">Partial / Due</option>
+          </select>
           {hasFilters && (
-            <button onClick={() => { setRouteFilter(''); setCollegeFilter(''); }} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+            <button onClick={() => { setRouteFilter(''); setCollegeFilter(''); setStatusFilterInline(''); setPaymentTypeFilter(''); }} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
               <X size={13} /> Clear
             </button>
           )}
