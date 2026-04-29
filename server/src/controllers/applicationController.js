@@ -86,7 +86,7 @@ const submitApplication = async (req, res) => {
     }
 
     const {
-      nameAsPerSSC, gender, bloodGroup, academicYear, address,
+      nameAsPerSSC, gender, bloodGroup, academicYear, dateOfJoining, address,
       parentName, parentPhone, studentPhone, emergencyContact,
     } = req.body;
 
@@ -98,6 +98,7 @@ const submitApplication = async (req, res) => {
       gender: gender || '',
       bloodGroup: bloodGroup || '',
       academicYear: academicYear || '',
+      dateOfJoining: dateOfJoining || '',
       address: address || '',
       email,
       regNo,

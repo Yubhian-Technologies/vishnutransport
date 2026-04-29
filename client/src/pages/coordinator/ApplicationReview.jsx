@@ -319,7 +319,7 @@ export default function ApplicationReview() {
                   ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : 'Student'],
                   ['Gender', selectedApp.gender ? selectedApp.gender.charAt(0).toUpperCase() + selectedApp.gender.slice(1) : '—'],
                   ['Blood Group', selectedApp.bloodGroup || '—'],
-                  ['Academic Year', selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—'],
+                  [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
                   ['Reg No', selectedApp.regNo],
                   ['Branch', selectedApp.branch],
                   ['Aadhaar', selectedApp.aadhaar || '—'],

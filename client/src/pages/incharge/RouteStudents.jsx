@@ -122,7 +122,7 @@ export default function RouteStudents() {
                 ['Type', selectedStudent.applicantRole === 'faculty' ? 'Faculty' : 'Student'],
                 ['Gender', selectedStudent.gender ? selectedStudent.gender.charAt(0).toUpperCase() + selectedStudent.gender.slice(1) : '—'],
                 ['Blood Group', selectedStudent.bloodGroup || '—'],
-                ['Academic Year', selectedStudent.academicYear ? `Year ${selectedStudent.academicYear}` : '—'],
+                [selectedStudent.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedStudent.applicantRole === 'faculty' ? (selectedStudent.dateOfJoining || '—') : (selectedStudent.academicYear ? `Year ${selectedStudent.academicYear}` : '—')],
                 ['Reg No', selectedStudent.regNo],
                 ['Branch', selectedStudent.branch],
                 ['College', selectedStudent.college || '—'],
