@@ -7,7 +7,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { applicationsAPI, routesAPI } from '../../utils/api';
 import { formatCurrency, formatDateTime, exportToCSV } from '../../utils/helpers';
 import toast from 'react-hot-toast';
-import { CheckCircle2, XCircle, Eye, Download, ExternalLink } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Download, ExternalLink, Filter, X } from 'lucide-react';
 
 const STATUS_TABS = [
   { label: 'Pending', value: 'pending_accounts' },
@@ -19,6 +19,8 @@ const STATUS_TABS = [
 
 export default function PaymentVerification() {
   const [statusFilter, setStatusFilter] = useState('pending_accounts');
+  const [routeFilter, setRouteFilter] = useState('');
+  const [collegeFilter, setCollegeFilter] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectTargetId, setRejectTargetId] = useState(null);
@@ -82,9 +84,20 @@ export default function PaymentVerification() {
   });
 
   const rawApps = data?.data || [];
-  const apps = isDueTab
+  const baseApps = isDueTab
     ? rawApps.filter(a => a.dueStatus === 'pending_verification')
     : rawApps;
+
+  const apps = baseApps
+    .filter(a => !routeFilter || a.routeId === routeFilter)
+    .filter(a => !collegeFilter || a.college === collegeFilter);
+
+  const collegeOptions = React.useMemo(
+    () => [...new Set(baseApps.map(a => a.college).filter(Boolean))].sort(),
+    [baseApps]
+  );
+
+  const hasFilters = routeFilter || collegeFilter;
 
   return (
     <Layout title="Payment Verification">
@@ -100,10 +113,55 @@ export default function PaymentVerification() {
             </button>
           ))}
           <div className="ml-auto">
-            <button onClick={() => exportToCSV(apps.map(a => ({ Name: a.name, RegNo: a.regNo, Route: a.routeName, Fare: a.fare, Status: a.status, Submitted: a.submittedAt })), 'payments')} className="btn-outline text-xs">
+            <button onClick={() => exportToCSV(apps.map((a, i) => ({
+              'S.No.': i + 1,
+              Name: a.name,
+              RegNo: a.regNo,
+              Type: a.applicantRole === 'faculty' ? 'Faculty' : 'Student',
+              College: a.college || '—',
+              Route: a.routeName,
+              'Bus No.': busNumberMap[a.routeId] || '—',
+              'Boarding Point': a.boardingPointName,
+              Fare: isDueTab ? a.dueAmount : a.fare,
+              'Payment Type': a.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : a.paymentType === 'partial' ? 'Partial' : 'Full',
+              Status: isDueTab ? a.dueStatus : a.status,
+              Submitted: isDueTab ? a.duePaymentSubmittedAt : a.submittedAt,
+            })), 'payments')} className="btn-outline text-xs">
               <Download size={14} /> Export CSV
             </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter size={14} className="text-gray-400" />
+          <select
+            value={routeFilter}
+            onChange={e => setRouteFilter(e.target.value)}
+            className="input py-1 text-sm w-auto min-w-[160px]"
+          >
+            <option value="">All Routes</option>
+            {(Array.isArray(routesData) ? routesData : []).map(r => (
+              <option key={r.id} value={r.id}>{r.routeName}{r.busNumber ? ` (${r.busNumber})` : ''}</option>
+            ))}
+          </select>
+          <select
+            value={collegeFilter}
+            onChange={e => setCollegeFilter(e.target.value)}
+            className="input py-1 text-sm w-auto min-w-[160px]"
+          >
+            <option value="">All Colleges</option>
+            {collegeOptions.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          {hasFilters && (
+            <button onClick={() => { setRouteFilter(''); setCollegeFilter(''); }} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+              <X size={13} /> Clear
+            </button>
+          )}
+          {hasFilters && (
+            <span className="text-xs text-gray-500 ml-1">{apps.length} result{apps.length !== 1 ? 's' : ''}</span>
+          )}
         </div>
 
         {isLoading ? <LoadingSpinner /> : (
