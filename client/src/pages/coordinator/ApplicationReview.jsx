@@ -36,6 +36,7 @@ export default function ApplicationReview() {
   const [collegeFilter, setCollegeFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState('');
   const [dueFilter, setDueFilter] = useState('');
+  const [statusInlineFilter, setStatusInlineFilter] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectModal, setRejectModal] = useState(false);
@@ -78,9 +79,10 @@ export default function ApplicationReview() {
         if (dueFilter === 'has_due' && (!isPartial || clearedDue)) return false;
         if (['pending_upload', 'pending_verification', 'verified', 'rejected'].includes(dueFilter) && app.dueStatus !== dueFilter) return false;
       }
+      if (statusInlineFilter && app.status !== statusInlineFilter) return false;
       return true;
     });
-  }, [allApps, search, collegeFilter, routeFilter, dueFilter]);
+  }, [allApps, search, collegeFilter, routeFilter, dueFilter, statusInlineFilter]);
 
   const approveMutation = useMutation({
     mutationFn: (id) => applicationsAPI.coordinatorReview(id, { action: 'approve' }),
@@ -126,9 +128,10 @@ export default function ApplicationReview() {
     setCollegeFilter('');
     setRouteFilter('');
     setDueFilter('');
+    setStatusInlineFilter('');
   };
 
-  const hasActiveFilters = search || collegeFilter || routeFilter || dueFilter;
+  const hasActiveFilters = search || collegeFilter || routeFilter || dueFilter || statusInlineFilter;
 
   return (
     <Layout title="Application Review">
@@ -138,7 +141,7 @@ export default function ApplicationReview() {
           {STATUS_TABS.map(tab => (
             <button
               key={tab.value}
-              onClick={() => { setSearchParams({ status: tab.value || 'all' }); resetFilters(); }}
+              onClick={() => { setSearchParams({ status: tab.value || 'all' }); resetFilters(); setStatusInlineFilter(''); }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${statusFilter === tab.value ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
             >
               {tab.label}
@@ -174,6 +177,18 @@ export default function ApplicationReview() {
           >
             <option value="">All Routes</option>
             {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+
+          <select
+            value={statusInlineFilter}
+            onChange={e => setStatusInlineFilter(e.target.value)}
+            className="input text-sm w-44"
+          >
+            <option value="">All Status</option>
+            <option value="pending_coordinator">Pending</option>
+            <option value="pending_accounts">Sent to Accounts</option>
+            <option value="approved_final">Confirmed</option>
+            <option value="rejected_l1">Rejected</option>
           </select>
 
           <select
