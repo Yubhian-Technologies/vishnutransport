@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [form, setForm] = useState({
     name: '', nameAsPerSSC: '', gender: '', bloodGroup: '',
-    academicYear: '', address: '', studentPhone: '', emergencyContact: '',
+    academicYear: '', dateOfJoining: '', address: '', studentPhone: '', emergencyContact: '',
     parentName: '', parentPhone: '', phone: '',
   });
 
@@ -34,6 +34,7 @@ export default function ProfilePage() {
         gender: userProfile.gender || '',
         bloodGroup: userProfile.bloodGroup || '',
         academicYear: userProfile.academicYear || '',
+        dateOfJoining: userProfile.dateOfJoining || '',
         address: userProfile.address || '',
         studentPhone: userProfile.studentPhone || '',
         emergencyContact: userProfile.emergencyContact || '',
@@ -187,15 +188,22 @@ export default function ProfilePage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="label">Academic Year</label>
-                <select value={form.academicYear} onChange={set('academicYear')} disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
-                  <option value="">-- Select Year --</option>
-                  {['1', '2', '3', '4', '5'].map(y => (
-                    <option key={y} value={y}>Year {y}</option>
-                  ))}
-                </select>
-              </div>
+              {role === 'faculty' ? (
+                <div>
+                  <label className="label">Date of Joining</label>
+                  <input type="date" value={form.dateOfJoining} onChange={set('dateOfJoining')} className="input" />
+                </div>
+              ) : (
+                <div>
+                  <label className="label">Academic Year</label>
+                  <select value={form.academicYear} onChange={set('academicYear')} disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
+                    <option value="">-- Select Year --</option>
+                    {['1', '2', '3', '4', '5'].map(y => (
+                      <option key={y} value={y}>Year {y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="label">Email Address</label>
                 <input value={userProfile?.email || ''} disabled className="input bg-gray-50 text-gray-400 cursor-not-allowed" />
