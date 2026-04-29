@@ -19,6 +19,7 @@ const schema = z.object({
   gender: z.enum(['male', 'female', 'other'], { required_error: 'Gender required' }),
   bloodGroup: z.string().min(1, 'Blood group required'),
   academicYear: z.string().optional(),
+  dateOfJoining: z.string().optional(),
   address: z.string().min(5, 'Address required'),
   regNo: z.string().optional(),
   aadhaar: z.string().optional(),
@@ -51,6 +52,7 @@ export default function ApplicationForm() {
     address: userProfile?.address || '',
     regNo: '',
     aadhaar: '',
+    dateOfJoining: '',
     branch: '',
     parentName: userProfile?.parentName || '',
     parentPhone: userProfile?.parentPhone || '',
@@ -251,7 +253,19 @@ export default function ApplicationForm() {
                       </select>
                       {errors.bloodGroup && <p className="text-red-500 text-xs mt-1">{errors.bloodGroup.message}</p>}
                     </div>
-                    {!isFaculty && (
+                    {isFaculty ? (
+                      <div>
+                        <label className="label">Date of Joining *</label>
+                        <input
+                          type="date"
+                          {...register('dateOfJoining', {
+                            validate: v => !isFaculty || (v && v.trim().length > 0) || 'Date of joining is required',
+                          })}
+                          className={`input ${errors.dateOfJoining ? 'input-error' : ''}`}
+                        />
+                        {errors.dateOfJoining && <p className="text-red-500 text-xs mt-1">{errors.dateOfJoining.message}</p>}
+                      </div>
+                    ) : (
                       <div>
                         <label className="label">Academic Year *</label>
                         <select {...register('academicYear', { validate: v => v && v.length > 0 || 'Academic year required' })} className={`input ${errors.academicYear ? 'input-error' : ''}`}>
@@ -491,6 +505,7 @@ export default function ApplicationForm() {
                   {[
                     ['Name', getValues('nameAsPerSSC')],
                     [isFaculty ? 'Employee ID' : 'Reg. No.', getValues('regNo')],
+                    ...(isFaculty ? [['Date of Joining', getValues('dateOfJoining')]] : []),
                     ['Branch', getValues('branch')],
                     ['College', selectedCollege?.name],
                     ['Route', selectedRoute?.routeName],
