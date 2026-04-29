@@ -18,7 +18,7 @@ const schema = z.object({
   nameAsPerSSC: z.string().min(2, 'Name as per SSC required'),
   gender: z.enum(['male', 'female', 'other'], { required_error: 'Gender required' }),
   bloodGroup: z.string().min(1, 'Blood group required'),
-  academicYear: z.string().min(1, 'Academic year required'),
+  academicYear: z.string().optional(),
   address: z.string().min(5, 'Address required'),
   regNo: z.string().optional(),
   aadhaar: z.string().optional(),
@@ -89,9 +89,11 @@ export default function ApplicationForm() {
   const watchedRouteId = watch('routeId');
   const watchedPaymentType = watch('paymentType');
   const watchedAcademicYear = watch('academicYear');
+  const watchedRegNo = watch('regNo');
+  const isFaculty = role === 'faculty';
   const isFirstYear = watchedAcademicYear === '1';
-  const aadhaarRequired = role === 'faculty' || isFirstYear;
-  const regNoRequired = role !== 'faculty' && !isFirstYear;
+  const aadhaarRequired = (isFaculty && !watchedRegNo?.trim()) || (!isFaculty && isFirstYear);
+  const regNoRequired = !isFaculty && !isFirstYear;
 
   useEffect(() => {
     clearErrors(['regNo', 'aadhaar']);
@@ -249,30 +251,34 @@ export default function ApplicationForm() {
                       </select>
                       {errors.bloodGroup && <p className="text-red-500 text-xs mt-1">{errors.bloodGroup.message}</p>}
                     </div>
-                    <div>
-                      <label className="label">Academic Year *</label>
-                      <select {...register('academicYear')} className={`input ${errors.academicYear ? 'input-error' : ''}`}>
-                        <option value="">-- Select Year --</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                        <option value="5">5th Year</option>
-                      </select>
-                      {errors.academicYear && <p className="text-red-500 text-xs mt-1">{errors.academicYear.message}</p>}
-                    </div>
+                    {!isFaculty && (
+                      <div>
+                        <label className="label">Academic Year *</label>
+                        <select {...register('academicYear', { validate: v => v && v.length > 0 || 'Academic year required' })} className={`input ${errors.academicYear ? 'input-error' : ''}`}>
+                          <option value="">-- Select Year --</option>
+                          <option value="1">1st Year</option>
+                          <option value="2">2nd Year</option>
+                          <option value="3">3rd Year</option>
+                          <option value="4">4th Year</option>
+                          <option value="5">5th Year</option>
+                        </select>
+                        {errors.academicYear && <p className="text-red-500 text-xs mt-1">{errors.academicYear.message}</p>}
+                      </div>
+                    )}
                     <div>
                       <label className="label">
-                        Registration Number {regNoRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
+                        {isFaculty ? 'Employee ID' : 'Registration Number'}{' '}
+                        {regNoRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
                       </label>
                       <input
                         {...register('regNo', {
                           validate: v => !regNoRequired || (v && v.trim().length >= 2) || 'Registration number is required',
                         })}
-                        placeholder="e.g. 20CS001"
+                        placeholder={isFaculty ? 'e.g. EMP001' : 'e.g. 20CS001'}
                         className={`input ${errors.regNo ? 'input-error' : ''}`}
                       />
                       {errors.regNo && <p className="text-red-500 text-xs mt-1">{errors.regNo.message}</p>}
+                      {isFaculty && <p className="text-xs text-amber-600 mt-1">If you don't have an Employee ID, Aadhaar number is required.</p>}
                       {isFirstYear && <p className="text-xs text-amber-600 mt-1">1st year students can fill this later after receiving their roll number.</p>}
                     </div>
                     <div>
@@ -282,7 +288,9 @@ export default function ApplicationForm() {
                     </div>
                     <div>
                       <label className="label">
-                        Aadhaar Number {aadhaarRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
+                        Aadhaar Number{' '}
+                        {aadhaarRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400">(optional)</span>}
+                        {isFaculty && !watchedRegNo?.trim() && <span className="text-xs text-amber-600 ml-1">— required when Employee ID is not provided</span>}
                       </label>
                       <input
                         {...register('aadhaar', {
@@ -482,7 +490,7 @@ export default function ApplicationForm() {
                 <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
                   {[
                     ['Name', getValues('nameAsPerSSC')],
-                    ['Reg. No.', getValues('regNo')],
+                    [isFaculty ? 'Employee ID' : 'Reg. No.', getValues('regNo')],
                     ['Branch', getValues('branch')],
                     ['College', selectedCollege?.name],
                     ['Route', selectedRoute?.routeName],
