@@ -71,9 +71,10 @@ export const applicationsAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  submitDuePayment: (id, file) => {
+  submitDuePayment: (id, file, utrNumber) => {
     const form = new FormData();
     form.append('paymentProof', file);
+    if (utrNumber) form.append('dueUtrNumber', utrNumber);
     return api.post(`/applications/${id}/due-payment`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

@@ -377,21 +377,35 @@ export default function PaymentVerification() {
               </div>
             </div>
 
-            {selectedApp.paymentProofUrl && (
-              <div>
-                <p className="text-sm font-medium mb-2">Initial Payment Proof</p>
-                <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-primary text-sm inline-flex gap-2">
-                  <ExternalLink size={14} /> Open Payment Proof
-                </a>
+            {(selectedApp.paymentProofUrl || selectedApp.utrNumber) && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Initial Payment Proof</p>
+                {selectedApp.utrNumber && (
+                  <p className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-mono font-semibold text-amber-800">
+                    UTR / Txn: {selectedApp.utrNumber}
+                  </p>
+                )}
+                {selectedApp.paymentProofUrl && (
+                  <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-primary text-sm inline-flex gap-2">
+                    <ExternalLink size={14} /> Open Payment Proof
+                  </a>
+                )}
               </div>
             )}
 
-            {selectedApp.duePaymentProofUrl && (
-              <div>
-                <p className="text-sm font-medium mb-2">Due Payment Proof</p>
-                <a href={selectedApp.duePaymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-sm inline-flex gap-2">
-                  <ExternalLink size={14} /> Open Due Payment Proof
-                </a>
+            {(selectedApp.duePaymentProofUrl || selectedApp.dueUtrNumber) && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Due Payment Proof</p>
+                {selectedApp.dueUtrNumber && (
+                  <p className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-mono font-semibold text-amber-800">
+                    UTR / Txn: {selectedApp.dueUtrNumber}
+                  </p>
+                )}
+                {selectedApp.duePaymentProofUrl && (
+                  <a href={selectedApp.duePaymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-sm inline-flex gap-2">
+                    <ExternalLink size={14} /> Open Due Payment Proof
+                  </a>
+                )}
               </div>
             )}
 

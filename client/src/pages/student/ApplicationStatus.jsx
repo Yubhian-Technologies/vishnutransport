@@ -27,6 +27,7 @@ const DUE_STATUS_CONFIG = {
 
 function DuePaymentUploader({ appId }) {
   const [file, setFile] = useState(null);
+  const [utrNumber, setUtrNumber] = useState('');
   const queryClient = useQueryClient();
 
   const onDrop = useCallback((accepted) => {
@@ -41,10 +42,11 @@ function DuePaymentUploader({ appId }) {
   });
 
   const mutation = useMutation({
-    mutationFn: () => applicationsAPI.submitDuePayment(appId, file),
+    mutationFn: () => applicationsAPI.submitDuePayment(appId, file, utrNumber),
     onSuccess: () => {
       toast.success('Due payment submitted for verification');
       setFile(null);
+      setUtrNumber('');
       queryClient.invalidateQueries({ queryKey: ['my-applications'] });
     },
     onError: (e) => toast.error(e.message),
@@ -52,6 +54,16 @@ function DuePaymentUploader({ appId }) {
 
   return (
     <div className="space-y-3">
+      <div>
+        <label className="text-xs font-medium text-gray-700 mb-1 block">Transaction / UTR Number *</label>
+        <input
+          value={utrNumber}
+          onChange={e => setUtrNumber(e.target.value)}
+          placeholder="e.g. UTR123456789012"
+          className="input text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-0.5">Enter the UTR or transaction reference from your payment</p>
+      </div>
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${isDragActive ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-amber-400'}`}
@@ -74,7 +86,7 @@ function DuePaymentUploader({ appId }) {
       </div>
       <button
         onClick={() => mutation.mutate()}
-        disabled={!file || mutation.isPending}
+        disabled={!file || !utrNumber.trim() || mutation.isPending}
         className="btn-primary w-full"
       >
         {mutation.isPending ? 'Submitting…' : 'Submit Due Payment Proof'}
@@ -131,6 +143,7 @@ export default function ApplicationStatus() {
               ['Boarding Point', app.boardingPointName],
               [app.paymentType === 'concession' ? 'Concession Fare' : 'Fare Paid', formatCurrency(app.paymentType === 'concession' ? (app.fare || app.fullFare) : app.fare)],
               ['Payment Type', app.paymentType === 'concession' ? 'Fee Concession' : app.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : app.paymentType === 'partial' ? 'Partial' : 'Full'],
+              ...(app.utrNumber ? [['Transaction / UTR No.', app.utrNumber]] : []),
               ['Submitted', formatDateTime(app.submittedAt)],
             ].map(([label, value]) => (
               <div key={label} className="bg-gray-50 rounded-lg p-3">

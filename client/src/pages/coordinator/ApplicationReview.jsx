@@ -373,12 +373,19 @@ export default function ApplicationReview() {
               </div>
             </div>
 
-            {selectedApp.paymentProofUrl && (
-              <div>
-                <p className="text-sm font-medium mb-2">Payment Proof</p>
-                <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-xs">
-                  View Document
-                </a>
+            {(selectedApp.paymentProofUrl || selectedApp.utrNumber) && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Payment Proof</p>
+                {selectedApp.utrNumber && (
+                  <p className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-mono font-semibold text-amber-800">
+                    UTR / Txn: {selectedApp.utrNumber}
+                  </p>
+                )}
+                {selectedApp.paymentProofUrl && (
+                  <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-xs inline-flex">
+                    View Document
+                  </a>
+                )}
               </div>
             )}
             {selectedApp.concessionReason && (

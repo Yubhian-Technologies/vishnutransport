@@ -218,7 +218,7 @@ export default function ApplicationForm() {
     // Step 1 — Route
     ['routeId', 'boardingPointId'],
     // Step 2 — Payment (file validated on submit)
-    [],
+    ['utrNumber'],
   ];
 
   const nextStep = async () => {
@@ -514,6 +514,17 @@ export default function ApplicationForm() {
                 )}
 
                 <div>
+                  <label className="label">Transaction / UTR Number *</label>
+                  <input
+                    {...register('utrNumber', { required: 'Transaction / UTR number is required' })}
+                    placeholder="e.g. UTR123456789012"
+                    className={`input ${errors.utrNumber ? 'input-error' : ''}`}
+                  />
+                  {errors.utrNumber && <p className="text-red-500 text-xs mt-1">{errors.utrNumber.message}</p>}
+                  <p className="text-xs text-gray-400 mt-1">Enter the 12-digit UTR or transaction reference from your payment</p>
+                </div>
+
+                <div>
                   <label className="label">Upload Payment Proof *</label>
                   <div
                     {...getRootProps()}
@@ -552,6 +563,7 @@ export default function ApplicationForm() {
                     ['Route', selectedRoute?.routeName],
                     ['Boarding Point', boardingPoints.find(b => b.id === getValues('boardingPointId'))?.name],
                     ['Fare', formatCurrency(fare)],
+                    ['Transaction / UTR No.', getValues('utrNumber')],
                     ['Payment Proof', paymentFile?.name],
                   ].map(([label, value]) => value && (
                     <div key={label} className="flex justify-between py-1 border-b border-gray-200 last:border-0">

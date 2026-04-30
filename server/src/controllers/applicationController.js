@@ -103,7 +103,7 @@ const submitApplication = async (req, res) => {
 
     const {
       nameAsPerSSC, gender, bloodGroup, academicYear, dateOfJoining, address,
-      parentName, parentPhone, studentPhone, emergencyContact,
+      parentName, parentPhone, studentPhone, emergencyContact, utrNumber,
     } = req.body;
 
     const appData = {
@@ -146,6 +146,7 @@ const submitApplication = async (req, res) => {
       dueReviewedAt: null,
       paymentProofUrl,
       paymentProofPublicId,
+      utrNumber: utrNumber || '',
       status: APPLICATION_STATUS.PENDING_COORDINATOR,
       seatNumber: null,
       l1ReviewedBy: null,
@@ -373,6 +374,7 @@ const uploadPaymentProof = async (req, res) => {
     await db.collection('applications').doc(req.params.id).update({
       paymentProofUrl: url,
       paymentProofPublicId: publicId,
+      utrNumber: req.body.utrNumber || '',
       updatedAt: new Date().toISOString(),
     });
 
@@ -408,6 +410,7 @@ const submitDuePayment = async (req, res) => {
     await doc.ref.update({
       duePaymentProofUrl: url,
       duePaymentPublicId: publicId,
+      dueUtrNumber: req.body.dueUtrNumber || '',
       duePaymentSubmittedAt: new Date().toISOString(),
       dueStatus: 'pending_verification',
       dueRejectionReason: null,
