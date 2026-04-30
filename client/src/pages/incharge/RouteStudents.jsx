@@ -38,7 +38,8 @@ export default function RouteStudents() {
   });
 
   const handleExport = () => {
-    exportToCSV(filtered.map(s => ({
+    exportToCSV(filtered.map((s, idx) => ({
+      'S.No.': idx + 1,
       Name: s.name,
       'Reg No': s.regNo,
       Branch: s.branch,
@@ -77,6 +78,7 @@ export default function RouteStudents() {
             <table className="table">
               <thead>
                 <tr>
+                  <th className="w-10">S.No.</th>
                   <th>Student</th>
                   <th>Boarding Point</th>
                   <th>Branch</th>
@@ -85,9 +87,10 @@ export default function RouteStudents() {
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={4} className="text-center py-8 text-gray-400">No confirmed students found</td></tr>
-                ) : filtered.map(student => (
+                  <tr><td colSpan={5} className="text-center py-8 text-gray-400">No confirmed students found</td></tr>
+                ) : filtered.map((student, idx) => (
                   <tr key={student.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedStudent(student)}>
+                    <td className="text-sm text-gray-500 font-medium text-center">{idx + 1}</td>
                     <td>
                       <p className="font-medium text-primary-700 hover:underline">{student.name}</p>
                       <p className="text-xs text-gray-400">{student.regNo}</p>
