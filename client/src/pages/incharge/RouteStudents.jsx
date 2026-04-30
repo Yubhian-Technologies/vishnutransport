@@ -23,13 +23,12 @@ export default function RouteStudents() {
   const myRoute = allRoutes.find(r => r.inchargeId === userProfile?.uid);
 
   const { data: appsData, isLoading } = useQuery({
-    queryKey: ['applications-incharge', myRoute?.id],
-    queryFn: () => applicationsAPI.getAll({}),
+    queryKey: ['applications-incharge', myRoute?.id, 'approved_final'],
+    queryFn: () => applicationsAPI.getAll({ status: 'approved_final' }),
     enabled: !!myRoute,
   });
 
   const allStudents = (appsData?.data || []).filter(a => a.routeId === myRoute?.id);
-  const confirmedCount = allStudents.filter(s => s.status === 'approved_final').length;
   const boardingPoints = [...new Set(allStudents.map(s => s.boardingPointName))];
 
   const filtered = allStudents.filter(s => {
@@ -55,7 +54,7 @@ export default function RouteStudents() {
         {myRoute && (
           <div className="card bg-blue-50 border-blue-200">
             <p className="text-sm text-blue-600">Route: <span className="font-semibold text-blue-800">{myRoute.routeName}</span></p>
-            <p className="text-xs text-blue-500 mt-0.5">{confirmedCount} confirmed · {allStudents.length} total applications · {myRoute.availableSeats} seats available</p>
+            <p className="text-xs text-blue-500 mt-0.5">{allStudents.length} confirmed students · {myRoute.availableSeats} seats available</p>
           </div>
         )}
 
@@ -82,12 +81,11 @@ export default function RouteStudents() {
                   <th>Boarding Point</th>
                   <th>Branch</th>
                   <th>Fare</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-8 text-gray-400">No students found</td></tr>
+                  <tr><td colSpan={4} className="text-center py-8 text-gray-400">No confirmed students found</td></tr>
                 ) : filtered.map(student => (
                   <tr key={student.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedStudent(student)}>
                     <td>
@@ -102,7 +100,6 @@ export default function RouteStudents() {
                     </td>
                     <td className="text-sm">{student.branch}</td>
                     <td className="text-sm font-medium">{formatCurrency(student.fare)}</td>
-                    <td><StatusBadge status={student.status} /></td>
                   </tr>
                 ))}
               </tbody>
