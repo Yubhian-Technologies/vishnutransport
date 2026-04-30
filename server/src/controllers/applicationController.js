@@ -25,7 +25,7 @@ const submitApplication = async (req, res) => {
 
     const {
       name, email, regNo, aadhaar, branch, college, collegeId,
-      routeId, boardingPointId, paymentType, partialPermissionId,
+      routeId, boardingPointId, paymentType, partialPermissionId, concessionPermissionId,
     } = req.body;
 
     if (!name || !regNo || !collegeId || !routeId || !boardingPointId) {
@@ -72,6 +72,8 @@ const submitApplication = async (req, res) => {
     let dueAmount = 0;
     let dueStatus = null;
     let resolvedPermissionId = null;
+    let resolvedConcessionId = null;
+    let concessionReason = null;
 
     if (partialPermissionId) {
       const permDoc = await db.collection('partialPaymentPermissions').doc(partialPermissionId).get();
@@ -82,6 +84,19 @@ const submitApplication = async (req, res) => {
         dueStatus = 'pending_upload';
         resolvedPermissionId = permDoc.id;
         await permDoc.ref.update({ used: true });
+      }
+    }
+
+    if (concessionPermissionId) {
+      const concDoc = await db.collection('concessionPermissions').doc(concessionPermissionId).get();
+      if (concDoc.exists && !concDoc.data().used && concDoc.data().studentId === uid) {
+        const conc = concDoc.data();
+        fare = conc.concessionFee;
+        dueAmount = 0;
+        dueStatus = null;
+        concessionReason = conc.reason;
+        resolvedConcessionId = concDoc.id;
+        await concDoc.ref.update({ used: true });
       }
     }
 
@@ -114,12 +129,14 @@ const submitApplication = async (req, res) => {
       routeName: route.routeName,
       boardingPointId,
       boardingPointName: bp.name,
-      paymentType: resolvedPermissionId ? 'coordinator_partial' : (paymentType || 'full'),
+      paymentType: resolvedConcessionId ? 'concession' : resolvedPermissionId ? 'coordinator_partial' : (paymentType || 'full'),
       fare,
       fullFare,
       dueAmount,
       dueStatus,
       partialPermissionId: resolvedPermissionId,
+      concessionPermissionId: resolvedConcessionId,
+      concessionReason,
       duePaymentProofUrl: null,
       duePaymentPublicId: null,
       duePaymentSubmittedAt: null,

@@ -15,6 +15,7 @@ import BusPass from './pages/student/BusPass';
 import MyAttendance from './pages/student/MyAttendance';
 import AttendanceOverview from './pages/coordinator/AttendanceOverview';
 import PaymentPermissions from './pages/coordinator/PaymentPermissions';
+import ConcessionManagement from './pages/coordinator/ConcessionManagement';
 
 import CoordinatorDashboard from './pages/coordinator/CoordinatorDashboard';
 import ApplicationReview from './pages/coordinator/ApplicationReview';
@@ -76,6 +77,7 @@ export default function App() {
       <Route path="/coordinator/analytics" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><CoordinatorAnalytics /></ProtectedRoute>} />
       <Route path="/coordinator/attendance" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><AttendanceOverview /></ProtectedRoute>} />
       <Route path="/coordinator/payment-permissions" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><PaymentPermissions /></ProtectedRoute>} />
+      <Route path="/coordinator/concessions" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><ConcessionManagement /></ProtectedRoute>} />
 
       {/* Accounts */}
       <Route path="/accounts" element={<ProtectedRoute roles={['accounts', 'super_admin']}><AccountsDashboard /></ProtectedRoute>} />

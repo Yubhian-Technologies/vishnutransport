@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import {
   Bus, LayoutDashboard, FileText, Building2, Route,
   BarChart3, CreditCard, Users, Settings, LogOut, UserCheck,
-  BookOpen, ShieldCheck, UserCircle, ScanLine, CalendarDays, Percent,
+  BookOpen, ShieldCheck, UserCircle, ScanLine, CalendarDays, Percent, BadgePercent,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -33,6 +33,7 @@ const NAV_CONFIG = {
     { to: '/coordinator/routes', icon: Route, label: 'Routes & Buses' },
     { to: '/coordinator/attendance', icon: CalendarDays, label: 'Attendance' },
     { to: '/coordinator/payment-permissions', icon: Percent, label: 'Payment Permissions' },
+    { to: '/coordinator/concessions', icon: BadgePercent, label: 'Fee Concessions' },
     { to: '/coordinator/analytics', icon: BarChart3, label: 'Analytics' },
   ],
   accounts: [

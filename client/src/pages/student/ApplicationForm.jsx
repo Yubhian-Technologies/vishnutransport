@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { collegesAPI, routesAPI, boardingPointsAPI, applicationsAPI, partialPermissionsAPI } from '../../utils/api';
+import { collegesAPI, routesAPI, boardingPointsAPI, applicationsAPI, partialPermissionsAPI, concessionsAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
@@ -31,7 +31,7 @@ const schema = z.object({
   collegeId: z.string().min(1, 'College required'),
   routeId: z.string().min(1, 'Route required'),
   boardingPointId: z.string().min(1, 'Boarding point required'),
-  paymentType: z.enum(['full', 'partial', 'coordinator_partial']),
+  paymentType: z.enum(['full', 'partial', 'coordinator_partial', 'concession']),
 });
 
 const STEPS = ['Personal Details', 'Select Route', 'Payment', 'Review & Submit'];
@@ -112,6 +112,11 @@ export default function ApplicationForm() {
     queryFn: partialPermissionsAPI.checkMy,
   });
 
+  const { data: concessionPermission } = useQuery({
+    queryKey: ['my-concession'],
+    queryFn: concessionsAPI.checkMy,
+  });
+
   const hasActiveApp = myApps.some(
     a => a.status !== 'rejected_l1' && a.status !== 'rejected_l2'
   );
@@ -150,7 +155,13 @@ export default function ApplicationForm() {
   const coordinatorPayNow = hasCoordinatorPartial ? Math.round(fullFare * partialPermission.percentage / 100) : 0;
   const coordinatorDue = hasCoordinatorPartial ? fullFare - coordinatorPayNow : 0;
 
+  // Concession — only applies when the selected route+boarding point matches
+  const concessionApplies = concessionPermission &&
+    watchedRouteId === concessionPermission.routeId &&
+    watchedBoardingPointId === concessionPermission.boardingPointId;
+
   const fare =
+    watchedPaymentType === 'concession' && concessionApplies ? concessionPermission.concessionFee :
     watchedPaymentType === 'coordinator_partial' ? coordinatorPayNow :
     watchedPaymentType === 'partial' && partialFareAmt ? partialFareAmt :
     fullFare;
@@ -181,6 +192,9 @@ export default function ApplicationForm() {
       formData.append('paymentProof', paymentFile);
       if (data.paymentType === 'coordinator_partial' && partialPermission) {
         formData.append('partialPermissionId', partialPermission.id);
+      }
+      if (data.paymentType === 'concession' && concessionPermission) {
+        formData.append('concessionPermissionId', concessionPermission.id);
       }
 
       await applicationsAPI.submit(formData);
@@ -433,7 +447,7 @@ export default function ApplicationForm() {
               <div className="space-y-5">
                 <h2 className="mb-4">Payment</h2>
 
-                {(hasPartialOption || hasCoordinatorPartial) && (
+                {(hasPartialOption || hasCoordinatorPartial || concessionApplies) && (
                   <div>
                     <label className="label">Payment Type</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -449,6 +463,15 @@ export default function ApplicationForm() {
                           <span className="font-medium text-sm text-amber-800">Coordinator Partial</span>
                           <span className="text-amber-700 font-bold">{formatCurrency(coordinatorPayNow)}</span>
                           <span className="text-xs text-amber-600 mt-0.5">Pay {partialPermission.percentage}% now · {formatCurrency(coordinatorDue)} due later</span>
+                        </label>
+                      )}
+
+                      {concessionApplies && (
+                        <label className={`flex flex-col p-3 border rounded-lg cursor-pointer ${watchedPaymentType === 'concession' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                          <input type="radio" {...register('paymentType')} value="concession" className="sr-only" />
+                          <span className="font-medium text-sm text-green-800">Fee Concession</span>
+                          <span className="text-green-700 font-bold">{formatCurrency(concessionPermission.concessionFee)}</span>
+                          <span className="text-xs text-green-600 mt-0.5">Concession granted by coordinator</span>
                         </label>
                       )}
 

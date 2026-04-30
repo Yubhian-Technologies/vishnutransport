@@ -381,6 +381,11 @@ export default function ApplicationReview() {
                 </a>
               </div>
             )}
+            {selectedApp.concessionReason && (
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800"><strong>Concession Reason:</strong> {selectedApp.concessionReason}</p>
+              </div>
+            )}
             {selectedApp.l1RejectionReason && (
               <div className="p-3 bg-red-50 rounded-lg">
                 <p className="text-sm text-red-700"><strong>Rejection Reason:</strong> {selectedApp.l1RejectionReason}</p>

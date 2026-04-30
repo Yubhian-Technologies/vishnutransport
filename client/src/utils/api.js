@@ -119,6 +119,13 @@ export const partialPermissionsAPI = {
   checkMy: () => api.get('/partial-permissions/my'),
 };
 
+export const concessionsAPI = {
+  getAll: () => api.get('/concessions'),
+  grant: (data) => api.post('/concessions', data),
+  revoke: (id) => api.delete(`/concessions/${id}`),
+  checkMy: () => api.get('/concessions/my'),
+};
+
 export const paymentsAPI = {
   getAll: (params) => api.get('/payments', { params }),
   getSummary: () => api.get('/payments/summary'),
