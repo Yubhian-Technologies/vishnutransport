@@ -107,6 +107,7 @@ export const analyticsAPI = {
 
 export const attendanceAPI = {
   scan: (qrData) => api.post('/attendance/scan', { qrData }),
+  markManual: (data) => api.post('/attendance/manual', data),
   getMy: () => api.get('/attendance/my'),
   getRoute: (params) => api.get('/attendance/route', { params }),
   getAll: (params) => api.get('/attendance', { params }),

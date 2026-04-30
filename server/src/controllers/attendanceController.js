@@ -152,4 +152,62 @@ const getAllAttendance = async (req, res) => {
   }
 };
 
-module.exports = { scanAttendance, getMyAttendance, getRouteAttendance, getAllAttendance };
+// POST /api/attendance/manual  (bus_incharge only)
+const markManual = async (req, res) => {
+  try {
+    const { studentId, period } = req.body;
+    if (!studentId || !period) return res.status(400).json({ error: 'studentId and period are required' });
+    if (!['morning', 'evening'].includes(period)) return res.status(400).json({ error: 'Invalid period' });
+
+    const today = new Date().toISOString().split('T')[0];
+    const inchargeId = req.user.uid;
+
+    const routeSnap = await db.collection('busRoutes').where('inchargeId', '==', inchargeId).get();
+    if (routeSnap.empty) return res.status(403).json({ error: 'No route assigned to you' });
+    const routeDoc = routeSnap.docs[0];
+    const route = { id: routeDoc.id, ...routeDoc.data() };
+
+    const appSnap = await db.collection('applications')
+      .where('studentId', '==', studentId)
+      .where('status', '==', 'approved_final')
+      .get();
+    const studentApp = appSnap.docs.find(d => d.data().routeId === route.id);
+    if (!studentApp) return res.status(404).json({ error: 'Student not found on this route' });
+
+    const appData = studentApp.data();
+
+    const dupSnap = await db.collection('attendance')
+      .where('studentId', '==', studentId)
+      .where('date', '==', today)
+      .where('period', '==', period)
+      .get();
+    if (!dupSnap.empty) {
+      return res.status(409).json({ error: `Attendance already marked for ${period} today` });
+    }
+
+    const record = {
+      studentId,
+      studentName: appData.name,
+      regNo: appData.regNo,
+      branch: appData.branch || '',
+      college: appData.college || '',
+      routeId: route.id,
+      routeName: route.routeName,
+      boardingPointName: appData.boardingPointName || '',
+      seatNumber: appData.seatNumber || null,
+      scannedBy: inchargeId,
+      markedManually: true,
+      period,
+      date: today,
+      timestamp: new Date().toISOString(),
+    };
+
+    const docRef = await db.collection('attendance').add(record);
+    res.status(201).json({ id: docRef.id, ...record });
+  } catch (error) {
+    console.error('Manual attendance error:', error);
+    res.status(500).json({ error: 'Failed to record attendance' });
+  }
+};
+
+module.exports = { scanAttendance, getMyAttendance, getRouteAttendance, getAllAttendance, markManual };
