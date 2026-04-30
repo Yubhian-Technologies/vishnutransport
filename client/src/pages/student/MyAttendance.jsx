@@ -35,10 +35,10 @@ export default function MyAttendance() {
             { label: 'Morning', value: morningCount, icon: Sun, color: 'text-amber-600 bg-amber-50' },
             { label: 'Evening', value: eveningCount, icon: Sunset, color: 'text-blue-600 bg-blue-50' },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="card flex items-center gap-3 py-3">
+            <div key={label} className="card flex flex-col items-center text-center py-3 gap-1.5">
               <div className={`p-2 rounded-lg ${color}`}><Icon size={16} /></div>
               <div>
-                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-xs text-gray-500 leading-tight">{label}</p>
                 <p className="font-bold text-gray-800">{value}</p>
               </div>
             </div>
