@@ -83,6 +83,13 @@ const createRoute = async (req, res) => {
       return res.status(400).json({ error: 'routeName, seatCapacity, and fare are required' });
     }
 
+    if (inchargeId) {
+      const existing = await db.collection('busRoutes').where('inchargeId', '==', inchargeId).limit(1).get();
+      if (!existing.empty) {
+        return res.status(409).json({ error: `This incharge is already assigned to route "${existing.docs[0].data().routeName}"` });
+      }
+    }
+
     const data = {
       routeName,
       routeNumber: routeNumber || '',
@@ -122,6 +129,15 @@ const updateRoute = async (req, res) => {
         updates[key] = req.body[key];
       }
     }
+
+    if (updates.inchargeId) {
+      const existing = await db.collection('busRoutes').where('inchargeId', '==', updates.inchargeId).get();
+      const conflict = existing.docs.find(d => d.id !== req.params.id);
+      if (conflict) {
+        return res.status(409).json({ error: `This incharge is already assigned to route "${conflict.data().routeName}"` });
+      }
+    }
+
     await db.collection('busRoutes').doc(req.params.id).update(updates);
     res.json({ message: 'Route updated successfully' });
   } catch (error) {
@@ -153,6 +169,12 @@ const assignIncharge = async (req, res) => {
     const userDoc = await db.collection('users').doc(inchargeId).get();
     if (!userDoc.exists || userDoc.data().role !== 'bus_incharge') {
       return res.status(400).json({ error: 'User is not a bus incharge' });
+    }
+
+    const existing = await db.collection('busRoutes').where('inchargeId', '==', inchargeId).get();
+    const conflict = existing.docs.find(d => d.id !== req.params.id);
+    if (conflict) {
+      return res.status(409).json({ error: `This incharge is already assigned to route "${conflict.data().routeName}"` });
     }
 
     await db.collection('busRoutes').doc(req.params.id).update({
