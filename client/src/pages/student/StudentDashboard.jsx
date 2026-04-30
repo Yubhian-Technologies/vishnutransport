@@ -82,7 +82,7 @@ export default function StudentDashboard() {
                 {[
                   { label: 'Route', value: latestApp.routeName },
                   { label: 'Boarding Point', value: latestApp.boardingPointName },
-                  { label: 'Fare', value: formatCurrency(latestApp.fare) },
+                  { label: latestApp.paymentType === 'concession' ? 'Concession Fare' : 'Fare', value: formatCurrency(latestApp.fare) },
                   { label: 'Submitted', value: formatDate(latestApp.submittedAt) },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-gray-50 rounded-lg p-3">
@@ -152,6 +152,13 @@ export default function StudentDashboard() {
                   </div>
                 );
               })()}
+
+              {latestApp.paymentType === 'concession' && latestApp.concessionReason && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800 font-medium">Fee Concession Applied</p>
+                  <p className="text-xs text-green-700 mt-0.5">Reason: {latestApp.concessionReason}</p>
+                </div>
+              )}
 
               {(latestApp.l1RejectionReason || latestApp.l2RejectionReason) && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">

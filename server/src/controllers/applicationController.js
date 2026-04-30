@@ -89,15 +89,16 @@ const submitApplication = async (req, res) => {
 
     if (concessionPermissionId) {
       const concDoc = await db.collection('concessionPermissions').doc(concessionPermissionId).get();
-      if (concDoc.exists && !concDoc.data().used && concDoc.data().studentId === uid) {
-        const conc = concDoc.data();
-        fare = conc.concessionFee;
-        dueAmount = 0;
-        dueStatus = null;
-        concessionReason = conc.reason;
-        resolvedConcessionId = concDoc.id;
-        await concDoc.ref.update({ used: true });
+      if (!concDoc.exists || concDoc.data().used || concDoc.data().studentId !== uid) {
+        return res.status(400).json({ error: 'Invalid or expired concession permission' });
       }
+      const conc = concDoc.data();
+      fare = conc.concessionFee;
+      dueAmount = 0;
+      dueStatus = null;
+      concessionReason = conc.reason;
+      resolvedConcessionId = concDoc.id;
+      await concDoc.ref.update({ used: true });
     }
 
     const {
@@ -284,6 +285,9 @@ const coordinatorReview = async (req, res) => {
       if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
       updates.status = APPLICATION_STATUS.REJECTED_L1;
       updates.l1RejectionReason = reason;
+      if (app.concessionPermissionId) {
+        await db.collection('concessionPermissions').doc(app.concessionPermissionId).update({ used: false }).catch(() => {});
+      }
     }
 
     await db.collection('applications').doc(req.params.id).update(updates);
@@ -336,6 +340,9 @@ const accountsReview = async (req, res) => {
       if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
       updates.status = APPLICATION_STATUS.REJECTED_L2;
       updates.l2RejectionReason = reason;
+      if (app.concessionPermissionId) {
+        await db.collection('concessionPermissions').doc(app.concessionPermissionId).update({ used: false }).catch(() => {});
+      }
     }
 
     await db.collection('applications').doc(req.params.id).update(updates);

@@ -129,8 +129,8 @@ export default function ApplicationStatus() {
               ['College', app.college],
               ['Route', app.routeName],
               ['Boarding Point', app.boardingPointName],
-              ['Fare Paid', formatCurrency(app.fare)],
-              ['Payment Type', app.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : app.paymentType === 'partial' ? 'Partial' : 'Full'],
+              [app.paymentType === 'concession' ? 'Concession Fare' : 'Fare Paid', formatCurrency(app.paymentType === 'concession' ? (app.fare || app.fullFare) : app.fare)],
+              ['Payment Type', app.paymentType === 'concession' ? 'Fee Concession' : app.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : app.paymentType === 'partial' ? 'Partial' : 'Full'],
               ['Submitted', formatDateTime(app.submittedAt)],
             ].map(([label, value]) => (
               <div key={label} className="bg-gray-50 rounded-lg p-3">
@@ -139,6 +139,16 @@ export default function ApplicationStatus() {
               </div>
             ))}
           </div>
+
+          {app.paymentType === 'concession' && app.concessionReason && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm font-semibold text-green-800">Fee Concession Applied</p>
+              <p className="text-xs text-green-700 mt-0.5">Reason: {app.concessionReason}</p>
+              {app.fullFare && app.fare !== app.fullFare && (
+                <p className="text-xs text-green-600 mt-0.5">Full fare: {formatCurrency(app.fullFare)} → Concession fare: {formatCurrency(app.fare)}</p>
+              )}
+            </div>
+          )}
 
           {/* Due amount info */}
           {hasDue && (
