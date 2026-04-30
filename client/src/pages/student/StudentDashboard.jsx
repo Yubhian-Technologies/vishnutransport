@@ -9,11 +9,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatDate, formatCurrency, STATUS_LABELS } from '../../utils/helpers';
 import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle } from 'lucide-react';
 
-const STEPS = [
-  { key: 'pending_coordinator', label: 'Submitted', done: ['pending_coordinator', 'pending_accounts', 'approved_final', 'rejected_l1', 'rejected_l2'] },
-  { key: 'pending_accounts', label: 'Coordinator Review', done: ['pending_accounts', 'approved_final', 'rejected_l2'] },
-  { key: 'approved_final', label: 'Accounts Review', done: ['approved_final'] },
+const TRACK_STAGES = [
+  { label: 'Submitted', dot: 'bg-amber-500', ring: 'ring-amber-300', text: 'text-amber-600' },
+  { label: 'Coordinator', dot: 'bg-blue-500', ring: 'ring-blue-300', text: 'text-blue-600' },
+  { label: 'Accounts', dot: 'bg-purple-500', ring: 'ring-purple-300', text: 'text-purple-600' },
+  { label: 'Confirmed', dot: 'bg-green-500', ring: 'ring-green-300', text: 'text-green-600' },
 ];
+
+const STATUS_TO_STAGE = {
+  pending_coordinator: { busIdx: 0, done: 1, rejectedAt: -1 },
+  rejected_l1:        { busIdx: 1, done: 1, rejectedAt: 1 },
+  pending_accounts:   { busIdx: 1, done: 2, rejectedAt: -1 },
+  rejected_l2:        { busIdx: 2, done: 2, rejectedAt: 2 },
+  approved_final:     { busIdx: 3, done: 4, rejectedAt: -1 },
+};
 
 export default function StudentDashboard() {
   const { userProfile, role } = useAuth();
@@ -83,27 +92,66 @@ export default function StudentDashboard() {
                 ))}
               </div>
 
-              <div className="relative">
-                <div className="flex items-center justify-between">
-                  {STEPS.map((step, i) => {
-                    const isDone = step.done.includes(latestApp.status);
-                    const isRejected = latestApp.status?.startsWith('rejected');
-                    return (
-                      <div key={step.key} className="flex flex-col items-center flex-1">
-                        {i > 0 && (
-                          <div className={`absolute left-0 right-0 h-0.5 top-4 ${isDone && !isRejected ? 'bg-primary-500' : 'bg-gray-200'}`}
-                            style={{ left: `${(i / (STEPS.length - 1)) * 50}%`, width: `${100 / (STEPS.length - 1)}%` }}
-                          />
-                        )}
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${isDone && !isRejected ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                          {isDone && !isRejected ? <CheckCircle2 size={16} /> : <span className="text-xs font-bold">{i + 1}</span>}
+              {/* Tracking Bar */}
+              {(() => {
+                const { busIdx, done: stagesDone, rejectedAt } = STATUS_TO_STAGE[latestApp.status] ?? { busIdx: 0, done: 1, rejectedAt: -1 };
+                const isRej = rejectedAt >= 0;
+                return (
+                  <div className="relative pt-1">
+                    {/* Grid: 4 cols for bus emoji row, dot row, label row */}
+                    <div className="relative grid grid-cols-4">
+                      {/* Bus emoji row */}
+                      {TRACK_STAGES.map((_, i) => (
+                        <div key={i} className="flex justify-center h-8 items-end pb-1">
+                          {i === busIdx && (
+                            <span className="text-2xl leading-none" style={{ transform: 'scaleX(-1)' }}>🚌</span>
+                          )}
                         </div>
-                        <p className="text-xs text-center mt-1 text-gray-600">{step.label}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                      ))}
+                    </div>
+
+                    {/* Track line (absolute, behind dots) — top aligns with dot centers (4px pt-1 + 32px bus row + 14px half-dot = 50px) */}
+                    <div className="absolute left-[12.5%] right-[12.5%] h-1.5 bg-gray-200 rounded-full" style={{ top: 50 }} />
+                    {busIdx > 0 && (
+                      <div
+                        className={`absolute left-[12.5%] h-1.5 rounded-full transition-all duration-700 ${isRej ? 'bg-red-400' : 'bg-gradient-to-r from-amber-400 via-blue-400 to-green-500'}`}
+                        style={{ top: 50, width: `${busIdx * 25}%` }}
+                      />
+                    )}
+
+                    {/* Dots row */}
+                    <div className="relative grid grid-cols-4">
+                      {TRACK_STAGES.map((stage, i) => {
+                        const isDone = i < stagesDone;
+                        const isRejHere = i === rejectedAt;
+                        const isCurrent = i === busIdx && !isRej;
+                        return (
+                          <div key={i} className="flex flex-col items-center">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 ${
+                              isRejHere ? 'bg-red-500' :
+                              isDone || isCurrent ? stage.dot : 'bg-gray-200'
+                            } ${isCurrent ? `ring-4 ${stage.ring}` : ''}`}>
+                              {isRejHere ? (
+                                <span className="text-white text-xs font-bold">✕</span>
+                              ) : isDone ? (
+                                <span className="text-white text-xs font-bold">✓</span>
+                              ) : (
+                                <span className="text-gray-400 text-xs font-bold">{i + 1}</span>
+                              )}
+                            </div>
+                            <p className={`text-xs text-center mt-1.5 font-medium leading-tight ${
+                              isRejHere ? 'text-red-500' :
+                              isDone || isCurrent ? stage.text : 'text-gray-400'
+                            }`}>
+                              {stage.label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {(latestApp.l1RejectionReason || latestApp.l2RejectionReason) && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
