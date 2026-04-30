@@ -273,6 +273,54 @@ export default function RouteManagement() {
             </div>
           </div>
 
+          {/* Bus Stops / Schedule */}
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-indigo-600" />
+                <div>
+                  <p className="text-sm font-semibold text-indigo-800">Bus Stops &amp; Schedule</p>
+                  <p className="text-xs text-indigo-500 mt-0.5">Informational only — no fare needed. Shown to students so they know arrival times.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStopRows(r => [...r, EMPTY_STOP()])}
+                className="flex items-center gap-1 text-xs bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
+              >
+                <Plus size={13} /> Add Stop
+              </button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {stopRows.map((stop, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
+                  <input
+                    value={stop.name}
+                    onChange={e => updateStopRow(i, 'name', e.target.value)}
+                    placeholder="Stop name (e.g. Main Gate)"
+                    className="input text-sm flex-1"
+                  />
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Clock size={12} className="text-indigo-400" />
+                    <input
+                      value={stop.time}
+                      onChange={e => updateStopRow(i, 'time', e.target.value)}
+                      placeholder="07:30"
+                      className="input text-sm w-20"
+                    />
+                  </div>
+                  <button type="button" onClick={() => removeStopRow(i)} className="p-1 text-red-400 hover:text-red-600 flex-shrink-0">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              {stopRows.length === 0 && (
+                <p className="text-xs text-indigo-400 text-center py-2">No stops added yet. Click "Add Stop" to begin.</p>
+              )}
+            </div>
+          </div>
+
           {/* College assignment */}
           <div>
             <label className="label">Assign to Colleges</label>
@@ -300,45 +348,6 @@ export default function RouteManagement() {
             {incharges.length === 0 && (
               <p className="text-xs text-gray-400 mt-1">No bus incharge users found. Create one from Admin → User Management.</p>
             )}
-          </div>
-
-          {/* Bus Stops / Schedule */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <label className="label mb-0">Bus Stops &amp; Schedule</label>
-                <p className="text-xs text-gray-400 mt-0.5">Informational only — shown to students so they know arrival times</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStopRows(r => [...r, EMPTY_STOP()])}
-                className="btn-outline text-xs py-1"
-              >
-                <Plus size={13} /> Add Stop
-              </button>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {stopRows.map((stop, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
-                  <input
-                    value={stop.name}
-                    onChange={e => updateStopRow(i, 'name', e.target.value)}
-                    placeholder="Stop name (e.g. Main Gate)"
-                    className="input text-sm flex-1"
-                  />
-                  <input
-                    value={stop.time}
-                    onChange={e => updateStopRow(i, 'time', e.target.value)}
-                    placeholder="Time (e.g. 07:30)"
-                    className="input text-sm w-28"
-                  />
-                  <button type="button" onClick={() => removeStopRow(i)} className="p-1 text-red-400 hover:text-red-600 flex-shrink-0">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Inline boarding points — only for create */}
