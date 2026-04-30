@@ -123,7 +123,7 @@ export default function ApplicationReview() {
       'Paid': a.fare,
       'Due Amount': a.dueAmount || 0,
       'Due Status': a.dueStatus || '—',
-      'Payment Type': (() => { const c = (a.paymentType === 'partial' || a.paymentType === 'coordinator_partial') && a.dueStatus === 'verified'; return a.paymentType === 'full' || c ? 'Full' : a.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })(),
+      'Payment Type': (() => { if (a.paymentType === 'concession') return 'Fee Concession'; const c = (a.paymentType === 'partial' || a.paymentType === 'coordinator_partial') && a.dueStatus === 'verified'; return a.paymentType === 'full' || c ? 'Full' : a.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })(),
       Status: a.status,
       'Submitted At': a.submittedAt,
     })), 'applications');
@@ -357,8 +357,8 @@ export default function ApplicationReview() {
                   ['Route', selectedApp.routeName],
                   ['Bus Number', busNumberMap[selectedApp.routeId] || '—'],
                   ['Boarding Point', selectedApp.boardingPointName],
-                  ['Payment Type', (() => { const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
-                  ['Total Fare', formatCurrency(selectedApp.fullFare || selectedApp.fare)],
+                  ['Payment Type', (() => { if (selectedApp.paymentType === 'concession') return 'Fee Concession'; const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
+                  ['Total Fare', formatCurrency(selectedApp.paymentType === 'concession' ? selectedApp.fare : (selectedApp.fullFare || selectedApp.fare))],
                   ...(selectedApp.paymentType === 'coordinator_partial' && selectedApp.dueStatus !== 'verified' ? [
                     ['Paid (Initial)', formatCurrency(selectedApp.fare)],
                     ['Due Amount', `${formatCurrency(selectedApp.dueAmount || 0)} (${selectedApp.dueStatus || 'pending'})`],
