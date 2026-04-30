@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { applicationsAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bus, Printer, ArrowLeft } from 'lucide-react';
+import { Bus, Printer, ArrowLeft, Phone, Truck, UserCog } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function BusPass() {
@@ -21,6 +21,12 @@ export default function BusPass() {
 
   const app = apps.find(a => a.status === 'approved_final');
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  const { data: routeDetails } = useQuery({
+    queryKey: ['route-details', app?.routeId],
+    queryFn: () => routesAPI.get(app.routeId),
+    enabled: !!app?.routeId,
+  });
 
   const qrData = JSON.stringify({
     uid: currentUser?.uid,
@@ -141,6 +147,43 @@ export default function BusPass() {
               </div>
             </div>
           </div>
+
+          {/* Driver & Incharge contact */}
+          {routeDetails && (routeDetails.driverName || routeDetails.inchargeName) && (
+            <div className="px-5 py-3 border-b border-gray-100">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-2">Bus Contacts</p>
+              <div className="grid grid-cols-2 gap-2">
+                {routeDetails.driverName && (
+                  <div className="flex items-start gap-2">
+                    <Truck size={13} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium">Driver</p>
+                      <p className="text-xs font-semibold text-gray-800">{routeDetails.driverName}</p>
+                      {routeDetails.driverPhone && (
+                        <p className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                          <Phone size={9} /> {routeDetails.driverPhone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {routeDetails.inchargeName && (
+                  <div className="flex items-start gap-2">
+                    <UserCog size={13} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-medium">Incharge</p>
+                      <p className="text-xs font-semibold text-gray-800">{routeDetails.inchargeName}</p>
+                      {routeDetails.inchargePhone && (
+                        <p className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                          <Phone size={9} /> {routeDetails.inchargePhone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* QR Code for attendance */}
           <div className="px-5 py-4 flex flex-col items-center gap-2">

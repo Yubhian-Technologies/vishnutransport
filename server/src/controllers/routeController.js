@@ -56,6 +56,15 @@ const getRoute = async (req, res) => {
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+    if (route.inchargeId) {
+      const inchargeDoc = await db.collection('users').doc(route.inchargeId).get();
+      if (inchargeDoc.exists) {
+        const u = inchargeDoc.data();
+        route.inchargeName = u.name || '';
+        route.inchargePhone = u.phone || '';
+      }
+    }
+
     res.json(route);
   } catch (error) {
     console.error('Get route error:', error);

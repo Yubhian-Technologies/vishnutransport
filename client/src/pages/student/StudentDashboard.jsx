@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { applicationsAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDate, formatCurrency, STATUS_LABELS } from '../../utils/helpers';
-import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle } from 'lucide-react';
+import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle, Phone, UserCog, Truck } from 'lucide-react';
 
 const TRACK_STAGES = [
   { label: 'Submitted', dot: 'bg-amber-500', ring: 'ring-amber-300', text: 'text-amber-600' },
@@ -36,6 +36,12 @@ export default function StudentDashboard() {
   const isApproved = latestApp?.status === 'approved_final';
   const hasActiveApp = latestApp && !['rejected_l1', 'rejected_l2'].includes(latestApp.status);
   const showProfilePrompt = isApproved && !userProfile?.profileCompleted;
+
+  const { data: routeDetails } = useQuery({
+    queryKey: ['route-details', latestApp?.routeId],
+    queryFn: () => routesAPI.get(latestApp.routeId),
+    enabled: isApproved && !!latestApp?.routeId,
+  });
 
   return (
     <Layout title={role === 'faculty' ? 'Faculty Dashboard' : 'Student Dashboard'}>
@@ -188,6 +194,46 @@ export default function StudentDashboard() {
                 </Link>
               </div>
             </div>
+
+            {isApproved && routeDetails && (routeDetails.driverName || routeDetails.inchargeName) && (
+              <div className="card">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Bus Contact Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {routeDetails.driverName && (
+                    <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Truck size={18} className="text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-amber-600 font-medium uppercase tracking-wide">Driver</p>
+                        <p className="font-semibold text-gray-800 text-sm mt-0.5">{routeDetails.driverName}</p>
+                        {routeDetails.driverPhone && (
+                          <a href={`tel:${routeDetails.driverPhone}`} className="flex items-center gap-1 text-xs text-amber-700 hover:underline mt-0.5">
+                            <Phone size={11} /> {routeDetails.driverPhone}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {routeDetails.inchargeName && (
+                    <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                      <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <UserCog size={18} className="text-blue-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Bus Incharge</p>
+                        <p className="font-semibold text-gray-800 text-sm mt-0.5">{routeDetails.inchargeName}</p>
+                        {routeDetails.inchargePhone && (
+                          <a href={`tel:${routeDetails.inchargePhone}`} className="flex items-center gap-1 text-xs text-blue-700 hover:underline mt-0.5">
+                            <Phone size={11} /> {routeDetails.inchargePhone}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="card text-center py-12">
