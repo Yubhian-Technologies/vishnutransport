@@ -7,7 +7,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { applicationsAPI, routesAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDate, formatCurrency, STATUS_LABELS } from '../../utils/helpers';
-import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle, Phone, UserCog, Truck } from 'lucide-react';
+import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle, Phone, UserCog, Truck, AlarmClock } from 'lucide-react';
 
 const TRACK_STAGES = [
   { label: 'Submitted', dot: 'bg-amber-500', ring: 'ring-amber-300', text: 'text-amber-600' },
@@ -194,6 +194,34 @@ export default function StudentDashboard() {
                 </Link>
               </div>
             </div>
+
+            {isApproved && routeDetails?.stops?.length > 0 && (
+              <div className="card">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <AlarmClock size={15} className="text-indigo-500" /> Bus Schedule
+                </h3>
+                <div className="relative">
+                  <div className="absolute left-[19px] top-3 bottom-3 w-0.5 bg-indigo-100" />
+                  <div className="space-y-3">
+                    {routeDetails.stops.map((stop, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-50 border-2 border-indigo-200 flex items-center justify-center flex-shrink-0 z-10">
+                          <span className="text-xs font-bold text-indigo-600">{i + 1}</span>
+                        </div>
+                        <div className="flex-1 flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                          <p className="text-sm font-medium text-gray-800">{stop.name}</p>
+                          {stop.time && (
+                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                              {stop.time}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isApproved && routeDetails && (routeDetails.driverName || routeDetails.inchargeName) && (
               <div className="card">

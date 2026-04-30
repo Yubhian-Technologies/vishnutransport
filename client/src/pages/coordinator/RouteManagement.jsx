@@ -7,10 +7,11 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { routesAPI, boardingPointsAPI, collegesAPI, usersAPI } from '../../utils/api';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, MapPin, UserCheck, Bus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, UserCheck, Bus, ChevronDown, ChevronRight, Clock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 const EMPTY_BP = () => ({ name: '', timings: '', location: '', fare: '', partialFare: '', order: '' });
+const EMPTY_STOP = () => ({ name: '', time: '' });
 
 export default function RouteManagement() {
   const queryClient = useQueryClient();
@@ -21,6 +22,7 @@ export default function RouteManagement() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [expandedRoute, setExpandedRoute] = useState(null);
   const [bpRows, setBpRows] = useState([EMPTY_BP()]);
+  const [stopRows, setStopRows] = useState([EMPTY_STOP()]);
   const [saving, setSaving] = useState(false);
 
   const { data: routes = [], isLoading } = useQuery({
@@ -72,12 +74,14 @@ export default function RouteManagement() {
   const openEdit = (route) => {
     setEditRoute(route);
     Object.entries(route).forEach(([k, v]) => setValue(k, v));
+    setStopRows(route.stops?.length ? route.stops.map(s => ({ name: s.name || '', time: s.time || '' })) : [EMPTY_STOP()]);
   };
 
   const closeRouteModal = () => {
     setRouteModal(false);
     setEditRoute(null);
     setBpRows([EMPTY_BP()]);
+    setStopRows([EMPTY_STOP()]);
     reset();
   };
 
@@ -89,15 +93,29 @@ export default function RouteManagement() {
     setBpRows(rows => rows.length === 1 ? [EMPTY_BP()] : rows.filter((_, i) => i !== index));
   };
 
+  const updateStopRow = (index, field, value) => {
+    setStopRows(rows => rows.map((r, i) => i === index ? { ...r, [field]: value } : r));
+  };
+
+  const removeStopRow = (index) => {
+    setStopRows(rows => rows.length === 1 ? [EMPTY_STOP()] : rows.filter((_, i) => i !== index));
+  };
+
+  const handleEditRoute = (formData) => {
+    const validStops = stopRows.filter(s => s.name.trim()).map(s => ({ name: s.name.trim(), time: s.time }));
+    updateRoute.mutate({ id: editRoute.id, data: { ...formData, stops: validStops } });
+  };
+
   const handleCreateRoute = async (formData) => {
     const validBps = bpRows.filter(bp => bp.name.trim());
     if (validBps.length === 0) {
       toast.error('Add at least one boarding point');
       return;
     }
+    const validStops = stopRows.filter(s => s.name.trim()).map(s => ({ name: s.name.trim(), time: s.time }));
     setSaving(true);
     try {
-      const routeRes = await routesAPI.create(formData);
+      const routeRes = await routesAPI.create({ ...formData, stops: validStops });
       const routeId = routeRes.id;
       await Promise.all(
         validBps.map((bp, i) =>
@@ -183,6 +201,19 @@ export default function RouteManagement() {
                       </button>
                     </div>
                     <BoardingPointsList routeId={route.id} onDelete={id => deleteBP.mutate(id)} />
+                    {route.stops?.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1"><Clock size={12} /> Bus Schedule</p>
+                        <div className="flex flex-wrap gap-2">
+                          {route.stops.map((s, i) => (
+                            <div key={i} className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg px-2.5 py-1">
+                              {s.time && <span className="text-xs font-bold text-indigo-600">{s.time}</span>}
+                              <span className="text-xs text-gray-700">{s.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {route.inchargeId && (
                       <p className="text-xs text-gray-500">
                         Incharge: {incharges.find(i => i.id === route.inchargeId)?.name || route.inchargeId}
@@ -199,10 +230,7 @@ export default function RouteManagement() {
       {/* Create / Edit Route Modal */}
       <Modal isOpen={routeModal || !!editRoute} onClose={closeRouteModal} title={editRoute ? 'Edit Route' : 'Add Route'} size="lg">
         <form
-          onSubmit={handleSubmit(editRoute
-            ? (data) => updateRoute.mutate({ id: editRoute.id, data })
-            : handleCreateRoute
-          )}
+          onSubmit={handleSubmit(editRoute ? handleEditRoute : handleCreateRoute)}
           className="space-y-5"
         >
           {/* Route details */}
@@ -272,6 +300,45 @@ export default function RouteManagement() {
             {incharges.length === 0 && (
               <p className="text-xs text-gray-400 mt-1">No bus incharge users found. Create one from Admin → User Management.</p>
             )}
+          </div>
+
+          {/* Bus Stops / Schedule */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <label className="label mb-0">Bus Stops &amp; Schedule</label>
+                <p className="text-xs text-gray-400 mt-0.5">Informational only — shown to students so they know arrival times</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStopRows(r => [...r, EMPTY_STOP()])}
+                className="btn-outline text-xs py-1"
+              >
+                <Plus size={13} /> Add Stop
+              </button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {stopRows.map((stop, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
+                  <input
+                    value={stop.name}
+                    onChange={e => updateStopRow(i, 'name', e.target.value)}
+                    placeholder="Stop name (e.g. Main Gate)"
+                    className="input text-sm flex-1"
+                  />
+                  <input
+                    value={stop.time}
+                    onChange={e => updateStopRow(i, 'time', e.target.value)}
+                    placeholder="Time (e.g. 07:30)"
+                    className="input text-sm w-28"
+                  />
+                  <button type="button" onClick={() => removeStopRow(i)} className="p-1 text-red-400 hover:text-red-600 flex-shrink-0">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Inline boarding points — only for create */}

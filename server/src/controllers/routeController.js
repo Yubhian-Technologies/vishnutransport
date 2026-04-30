@@ -76,7 +76,7 @@ const createRoute = async (req, res) => {
   try {
     const {
       routeName, routeNumber, startPoint, endPoint,
-      seatCapacity, fare, partialFare, collegeIds, busNumber, driverName, driverPhone, inchargeId,
+      seatCapacity, fare, partialFare, collegeIds, busNumber, driverName, driverPhone, inchargeId, stops,
     } = req.body;
 
     if (!routeName || !seatCapacity || fare === undefined) {
@@ -96,6 +96,7 @@ const createRoute = async (req, res) => {
       driverName: driverName || '',
       driverPhone: driverPhone || '',
       inchargeId: inchargeId || null,
+      stops: Array.isArray(stops) ? stops : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -113,7 +114,7 @@ const updateRoute = async (req, res) => {
     const allowed = [
       'routeName', 'routeNumber', 'startPoint', 'endPoint',
       'seatCapacity', 'fare', 'partialFare', 'collegeIds',
-      'busNumber', 'driverName', 'driverPhone', 'inchargeId',
+      'busNumber', 'driverName', 'driverPhone', 'inchargeId', 'stops',
     ];
     const updates = { updatedAt: new Date().toISOString() };
     for (const key of allowed) {
