@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Bus, Eye, EyeOff, MapPin, Shield, Ticket } from 'lucide-react';
+import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -13,9 +13,9 @@ const schema = z.object({
 });
 
 const FEATURES = [
-  { icon: Bus, title: 'Easy Bus Pass', desc: 'Apply for your college bus pass in minutes' },
-  { icon: MapPin, title: 'Real-Time Tracking', desc: 'Monitor your application status instantly' },
-  { icon: Ticket, title: 'Digital Access', desc: 'Your bus pass, always in your pocket' },
+  { icon: Sparkles, title: 'Clean & Neat Buses', desc: 'Travel in well-maintained, spotlessly clean buses every day' },
+  { icon: UserCheck, title: 'Experienced Drivers', desc: 'Skilled and trained drivers ensuring a safe, smooth journey' },
+  { icon: Shield, title: 'Your Safety, Our Priority', desc: 'GPS-tracked rides with on-board security for your peace of mind' },
 ];
 
 export default function Login() {

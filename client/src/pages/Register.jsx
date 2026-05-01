@@ -22,10 +22,10 @@ const schema = z.object({
 });
 
 const PERKS = [
-  'Instant bus pass application',
-  'Real-time status tracking',
-  'Digital bus pass access',
-  'Attendance monitoring',
+  'Clean and well-maintained buses',
+  'Experienced and trained drivers',
+  'On-board security for safe travel',
+  'GPS-tracked routes for peace of mind',
 ];
 
 export default function Register() {
