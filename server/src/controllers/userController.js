@@ -166,7 +166,7 @@ const updateMyProfile = async (req, res) => {
     const {
       name, phone,
       nameAsPerSSC, gender, bloodGroup, academicYear, dateOfJoining, address,
-      parentName, parentPhone, studentPhone, emergencyContact,
+      regNo, parentName, parentPhone, studentPhone, emergencyContact,
     } = req.body;
 
     const updates = {
@@ -183,6 +183,7 @@ const updateMyProfile = async (req, res) => {
     if (academicYear !== undefined) updates.academicYear = academicYear || '';
     if (dateOfJoining !== undefined) updates.dateOfJoining = dateOfJoining || '';
     if (address !== undefined) updates.address = address || '';
+    if (regNo !== undefined) updates.regNo = regNo || '';
     if (parentName !== undefined) updates.parentName = parentName || '';
     if (parentPhone !== undefined) updates.parentPhone = parentPhone || '';
     if (studentPhone !== undefined) updates.studentPhone = studentPhone || '';

@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [form, setForm] = useState({
     name: '', nameAsPerSSC: '', gender: '', bloodGroup: '',
-    academicYear: '', dateOfJoining: '', address: '', studentPhone: '', emergencyContact: '',
+    academicYear: '', dateOfJoining: '', address: '', regNo: '', studentPhone: '', emergencyContact: '',
     parentName: '', parentPhone: '', phone: '',
   });
 
@@ -36,6 +36,7 @@ export default function ProfilePage() {
         academicYear: userProfile.academicYear || '',
         dateOfJoining: userProfile.dateOfJoining || '',
         address: userProfile.address || '',
+        regNo: userProfile.regNo || '',
         studentPhone: userProfile.studentPhone || '',
         emergencyContact: userProfile.emergencyContact || '',
         parentName: userProfile.parentName || '',
@@ -202,6 +203,12 @@ export default function ProfilePage() {
                       <option key={y} value={y}>Year {y}</option>
                     ))}
                   </select>
+                </div>
+              )}
+              {role === 'student' && (
+                <div>
+                  <label className="label">Registration Number</label>
+                  <input value={form.regNo} onChange={set('regNo')} placeholder="e.g. 22A91A0501" disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`} />
                 </div>
               )}
               <div>
