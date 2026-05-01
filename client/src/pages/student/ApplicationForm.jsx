@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, ChevronRight, ChevronLeft, QrCode, Building2 } from 'lucide-react';
+import { Upload, X, ChevronRight, ChevronLeft, ChevronDown, QrCode, Building2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 const schema = z.object({
@@ -270,22 +270,28 @@ export default function ApplicationForm() {
                     </div>
                     <div>
                       <label className="label">Gender *</label>
-                      <select {...register('gender')} className={`input ${errors.gender ? 'input-error' : ''}`}>
-                        <option value="">-- Select Gender --</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <div className="select-wrapper">
+                        <select {...register('gender')} className={`select ${errors.gender ? 'input-error' : ''}`}>
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                        <ChevronDown size={15} className="select-chevron" />
+                      </div>
                       {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>}
                     </div>
                     <div>
                       <label className="label">Blood Group *</label>
-                      <select {...register('bloodGroup')} className={`input ${errors.bloodGroup ? 'input-error' : ''}`}>
-                        <option value="">-- Select Blood Group --</option>
-                        {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
-                          <option key={bg} value={bg}>{bg}</option>
-                        ))}
-                      </select>
+                      <div className="select-wrapper">
+                        <select {...register('bloodGroup')} className={`select ${errors.bloodGroup ? 'input-error' : ''}`}>
+                          <option value="">Select Blood Group</option>
+                          {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
+                            <option key={bg} value={bg}>{bg}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={15} className="select-chevron" />
+                      </div>
                       {errors.bloodGroup && <p className="text-red-500 text-xs mt-1">{errors.bloodGroup.message}</p>}
                     </div>
                     {isFaculty ? (
@@ -303,14 +309,17 @@ export default function ApplicationForm() {
                     ) : (
                       <div>
                         <label className="label">Academic Year *</label>
-                        <select {...register('academicYear', { validate: v => v && v.length > 0 || 'Academic year required' })} className={`input ${errors.academicYear ? 'input-error' : ''}`}>
-                          <option value="">-- Select Year --</option>
-                          <option value="1">1st Year</option>
-                          <option value="2">2nd Year</option>
-                          <option value="3">3rd Year</option>
-                          <option value="4">4th Year</option>
-                          <option value="5">5th Year</option>
-                        </select>
+                        <div className="select-wrapper">
+                          <select {...register('academicYear', { validate: v => v && v.length > 0 || 'Academic year required' })} className={`select ${errors.academicYear ? 'input-error' : ''}`}>
+                            <option value="">Select Year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                            <option value="5">5th Year</option>
+                          </select>
+                          <ChevronDown size={15} className="select-chevron" />
+                        </div>
                         {errors.academicYear && <p className="text-red-500 text-xs mt-1">{errors.academicYear.message}</p>}
                       </div>
                     )}
@@ -434,12 +443,15 @@ export default function ApplicationForm() {
                 {watchedRouteId && (
                   <div>
                     <label className="label">Boarding Point *</label>
-                    <select {...register('boardingPointId')} className={`input ${errors.boardingPointId ? 'input-error' : ''}`}>
-                      <option value="">-- Select Boarding Point --</option>
-                      {boardingPoints.map(bp => (
-                        <option key={bp.id} value={bp.id}>{bp.name} {bp.timings ? `(${bp.timings})` : ''}</option>
-                      ))}
-                    </select>
+                    <div className="select-wrapper">
+                      <select {...register('boardingPointId')} className={`select ${errors.boardingPointId ? 'input-error' : ''}`}>
+                        <option value="">Select Boarding Point</option>
+                        {boardingPoints.map(bp => (
+                          <option key={bp.id} value={bp.id}>{bp.name} {bp.timings ? `(${bp.timings})` : ''}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} className="select-chevron" />
+                    </div>
                     {errors.boardingPointId && <p className="text-red-500 text-xs mt-1">{errors.boardingPointId.message}</p>}
                   </div>
                 )}

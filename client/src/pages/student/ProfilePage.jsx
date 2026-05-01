@@ -4,7 +4,7 @@ import Layout from '../../components/common/Layout';
 import { useAuth } from '../../contexts/AuthContext';
 import { profileAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
-import { User, Phone, Users, CheckCircle2, Camera, Loader2, Lock } from 'lucide-react';
+import { User, Phone, Users, CheckCircle2, Camera, Loader2, Lock, ChevronDown } from 'lucide-react';
 
 export default function ProfilePage() {
   const { userProfile, role, updateProfile, refreshProfile } = useAuth();
@@ -173,21 +173,27 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="label">Gender</label>
-                <select value={form.gender} onChange={set('gender')} disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
-                  <option value="">-- Select Gender --</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
+                <div className="select-wrapper">
+                  <select value={form.gender} onChange={set('gender')} disabled={isLocked} className={`select ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <ChevronDown size={15} className="select-chevron" />
+                </div>
               </div>
               <div>
                 <label className="label">Blood Group</label>
-                <select value={form.bloodGroup} onChange={set('bloodGroup')} disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
-                  <option value="">-- Select Blood Group --</option>
-                  {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
-                    <option key={bg} value={bg}>{bg}</option>
-                  ))}
-                </select>
+                <div className="select-wrapper">
+                  <select value={form.bloodGroup} onChange={set('bloodGroup')} disabled={isLocked} className={`select ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
+                    <option value="">Select Blood Group</option>
+                    {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
+                      <option key={bg} value={bg}>{bg}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={15} className="select-chevron" />
+                </div>
               </div>
               {role === 'faculty' ? (
                 <div>
@@ -197,12 +203,15 @@ export default function ProfilePage() {
               ) : (
                 <div>
                   <label className="label">Academic Year</label>
-                  <select value={form.academicYear} onChange={set('academicYear')} disabled={isLocked} className={`input ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
-                    <option value="">-- Select Year --</option>
-                    {['1', '2', '3', '4', '5'].map(y => (
-                      <option key={y} value={y}>Year {y}</option>
-                    ))}
-                  </select>
+                  <div className="select-wrapper">
+                    <select value={form.academicYear} onChange={set('academicYear')} disabled={isLocked} className={`select ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
+                      <option value="">Select Year</option>
+                      {['1', '2', '3', '4', '5'].map(y => (
+                        <option key={y} value={y}>Year {y}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={15} className="select-chevron" />
+                  </div>
                 </div>
               )}
               {role === 'student' && (
