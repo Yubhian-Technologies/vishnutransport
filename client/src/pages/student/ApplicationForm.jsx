@@ -43,6 +43,8 @@ export default function ApplicationForm() {
   const [step, setStep] = useState(0);
   const [paymentFile, setPaymentFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [ackTimings, setAckTimings] = useState(false);
+  const [ackRules, setAckRules] = useState(false);
 
   const profileDefaults = {
     nameAsPerSSC: userProfile?.nameAsPerSSC || userProfile?.name || '',
@@ -573,9 +575,64 @@ export default function ApplicationForm() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500">
-                  By submitting, you confirm all details are correct and payment has been made.
-                </p>
+
+                {/* Terms & Conditions */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Rules & Regulations of Transport Department</h3>
+                  <div className="h-56 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50 text-xs text-gray-600 space-y-2 leading-relaxed">
+                    <ul className="list-disc list-outside pl-4 space-y-2">
+                      <li>Students should inform the transport wing/admission counter about the requirement of availing the bus service at the time of admission and during the beginning of every year to the officer in charge.</li>
+                      <li>The bus fare fixed annually should be paid in advance which will qualify the student to travel in the said bus.</li>
+                      <li>A bus pass will be issued to the student once the payment is made and students require carrying the said pass without fail while travelling and the same will be valid for one academic year only.</li>
+                      <li>All the students travelling in the college bus should carry the bus pass and produce it at any time if demanded by the Driver or the Staff member of the college.</li>
+                      <li>The students travelling in the college bus should occupy the seats allotted to them and should not create any disturbance to other fellow students and staff.</li>
+                      <li>College has complete authority to inspect transport vehicles including personal belongings during transit or at any time in and outside the campus.</li>
+                      <li>Any student found travelling in bus without having paid the transport fee, he/she shall be liable to be fined Rs.2000/- for first time and if repeated, student shall be assumed as a regular traveller and charged full transport annual fee plus fine.</li>
+                      <li>The students availing the transport facility shall be responsible for all the personal belongings and the College management is not responsible for theft / loss of property during travel in bus.</li>
+                      <li>Bus pass cannot be transferred from one person to another. Student owning the bus pass is the sole user of the pass. Transferring or sharing of a pass is prohibited. If such activity occurs, both participating parties' transport privileges will be revoked.</li>
+                      <li>Lost or stolen ID card can be re-issued on payment of Rs. 500/-.</li>
+                      <li>Ragging, by law, is strictly prohibited. Any student who is found indulging in any misconduct like ragging, theft, fighting, misbehavior, etc., will face strict disciplinary action or legal proceedings.</li>
+                      <li>Students indulging in ragging, smoking/consumption of alcohol and physical assault within the campus and college bus is prohibited and students indulging in the same will be dismissed.</li>
+                      <li>No hooting, loud music, clapping, singing, or loud talking is allowed in the bus. Only earphones are permitted.</li>
+                      <li>Students should not celebrate birthdays, Holi, Valentine's Day, etc., inside the college bus. Violators will be fined.</li>
+                      <li>Respect fellow students in the bus, especially girl students.</li>
+                      <li>Students cannot change boarding/dropping points or routes without permission. Mid-semester requests will not be accepted.</li>
+                      <li>Students must board and drop only at locations mentioned in their bus pass.</li>
+                      <li>If a student changes their residence, the new location must be informed to the transport in charge.</li>
+                      <li>Any damage to the bus will be charged along with a penalty.</li>
+                      <li>The College can deny transport to any student for misconduct.</li>
+                      <li>No refunds for discontinuing transport mid-year.</li>
+                      <li>Ignorance of rules is not an excuse. Students and parents must be aware of them.</li>
+                      <li>The College may change rules at any time and students must comply.</li>
+                      <li>I hereby declare that I've understood all terms and have also explained them to my parent/guardian. If I violate any rule, my bus pass will be revoked without refund.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={ackTimings}
+                      onChange={e => setAckTimings(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-700">
+                      I acknowledge that I am aware of the bus timings and that the paid amount is <strong>non-refundable</strong> under any circumstances.
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={ackRules}
+                      onChange={e => setAckRules(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-700">
+                      I have read, understood, and agree to abide by all the Rules & Regulations of the Transport Department stated above.
+                    </span>
+                  </label>
+                </div>
               </div>
             )}
           </div>
@@ -589,7 +646,7 @@ export default function ApplicationForm() {
                 Next <ChevronRight size={16} />
               </button>
             ) : (
-              <button type="submit" disabled={submitting} className="btn-primary">
+              <button type="submit" disabled={submitting || !ackTimings || !ackRules} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
                 {submitting ? 'Submitting...' : 'Submit Application'}
               </button>
             )}
