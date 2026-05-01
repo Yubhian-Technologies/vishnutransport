@@ -44,6 +44,9 @@ const createUser = async (req, res) => {
     if (!Object.values(ROLES).includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
+    if (req.user.role === ROLES.BUS_COORDINATOR && role !== ROLES.GUEST) {
+      return res.status(403).json({ error: 'Coordinators can only create guest users' });
+    }
 
     const userRecord = await auth.createUser({ email, password, displayName: name });
     await auth.setCustomUserClaims(userRecord.uid, { role });
@@ -201,6 +204,37 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+const getGuestUsers = async (req, res) => {
+  try {
+    const snapshot = await db.collection('users').where('role', '==', ROLES.GUEST).get();
+    const guests = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+      email: doc.data().email,
+      disabled: doc.data().disabled || false,
+      createdAt: doc.data().createdAt,
+    }));
+    res.json(guests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch guest users' });
+  }
+};
+
+const deleteGuestUser = async (req, res) => {
+  try {
+    const targetDoc = await db.collection('users').doc(req.params.id).get();
+    if (!targetDoc.exists) return res.status(404).json({ error: 'User not found' });
+    if (targetDoc.data().role !== ROLES.GUEST) {
+      return res.status(403).json({ error: 'Can only delete guest users' });
+    }
+    await auth.deleteUser(req.params.id);
+    await db.collection('users').doc(req.params.id).delete();
+    res.json({ message: 'Guest user deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete guest user' });
+  }
+};
+
 const getBusInchargeList = async (req, res) => {
   try {
     const snapshot = await db.collection('users')
@@ -219,4 +253,4 @@ const getBusInchargeList = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, getUser, createUser, updateUser, deleteUser, getBusInchargeList, updateMyProfile, uploadProfilePhoto };
+module.exports = { getAllUsers, getUser, createUser, updateUser, deleteUser, getBusInchargeList, updateMyProfile, uploadProfilePhoto, getGuestUsers, deleteGuestUser };

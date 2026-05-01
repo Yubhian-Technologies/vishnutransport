@@ -80,6 +80,7 @@ export const AuthProvider = ({ children }) => {
   const isAccounts = role === 'accounts';
   const isIncharge = role === 'bus_incharge';
   const isSuperAdmin = role === 'super_admin';
+  const isGuest = role === 'guest';
   const isStaff = ['bus_coordinator', 'accounts', 'bus_incharge', 'super_admin'].includes(role);
 
   const value = {
@@ -93,6 +94,7 @@ export const AuthProvider = ({ children }) => {
     isAccounts,
     isIncharge,
     isSuperAdmin,
+    isGuest,
     isStaff,
     login,
     register,

@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import {
   Bus, LayoutDashboard, FileText, Building2, Route,
   BarChart3, CreditCard, Users, Settings, LogOut, UserCheck,
-  BookOpen, ShieldCheck, UserCircle, ScanLine, CalendarDays, Percent, BadgePercent,
+  BookOpen, ShieldCheck, UserCircle, ScanLine, CalendarDays, Percent, BadgePercent, Eye,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -35,6 +35,7 @@ const NAV_CONFIG = {
     { to: '/coordinator/payment-permissions', icon: Percent, label: 'Payment Permissions' },
     { to: '/coordinator/concessions', icon: BadgePercent, label: 'Fee Concessions' },
     { to: '/coordinator/analytics', icon: BarChart3, label: 'Analytics' },
+    { to: '/coordinator/guests', icon: Eye, label: 'Guest Access' },
   ],
   accounts: [
     { to: '/accounts', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -53,6 +54,9 @@ const NAV_CONFIG = {
     { to: '/accounts', icon: CreditCard, label: 'Accounts Panel' },
     { to: '/admin/config', icon: Settings, label: 'System Config' },
   ],
+  guest: [
+    { to: '/guest', icon: LayoutDashboard, label: 'Overview', end: true },
+  ],
 };
 
 const ROLE_LABELS = {
@@ -62,6 +66,7 @@ const ROLE_LABELS = {
   accounts: 'Accounts',
   bus_incharge: 'Bus Incharge',
   super_admin: 'Super Admin',
+  guest: 'Guest',
 };
 
 export default function Sidebar({ isOpen, onClose }) {

@@ -35,6 +35,9 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import SystemConfig from './pages/admin/SystemConfig';
 
+import GuestDashboard from './pages/guest/GuestDashboard';
+import GuestManagement from './pages/coordinator/GuestManagement';
+
 const RoleRouter = () => {
   const { role } = useAuth();
   if (role === 'student') return <Navigate to="/student" replace />;
@@ -43,6 +46,7 @@ const RoleRouter = () => {
   if (role === 'accounts') return <Navigate to="/accounts" replace />;
   if (role === 'bus_incharge') return <Navigate to="/incharge" replace />;
   if (role === 'super_admin') return <Navigate to="/admin" replace />;
+  if (role === 'guest') return <Navigate to="/guest" replace />;
   return <Navigate to="/login" replace />;
 };
 
@@ -78,6 +82,7 @@ export default function App() {
       <Route path="/coordinator/attendance" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><AttendanceOverview /></ProtectedRoute>} />
       <Route path="/coordinator/payment-permissions" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><PaymentPermissions /></ProtectedRoute>} />
       <Route path="/coordinator/concessions" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><ConcessionManagement /></ProtectedRoute>} />
+      <Route path="/coordinator/guests" element={<ProtectedRoute roles={['bus_coordinator', 'super_admin']}><GuestManagement /></ProtectedRoute>} />
 
       {/* Accounts */}
       <Route path="/accounts" element={<ProtectedRoute roles={['accounts', 'super_admin']}><AccountsDashboard /></ProtectedRoute>} />
@@ -93,6 +98,9 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute roles={['super_admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute roles={['super_admin']}><UserManagement /></ProtectedRoute>} />
       <Route path="/admin/config" element={<ProtectedRoute roles={['super_admin']}><SystemConfig /></ProtectedRoute>} />
+
+      {/* Guest */}
+      <Route path="/guest" element={<ProtectedRoute roles={['guest']}><GuestDashboard /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

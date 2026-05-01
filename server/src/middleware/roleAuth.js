@@ -5,6 +5,7 @@ const ROLES = {
   BUS_INCHARGE: 'bus_incharge',
   STUDENT: 'student',
   FACULTY: 'faculty',
+  GUEST: 'guest',
 };
 
 const requireRole = (...allowedRoles) => {
@@ -38,6 +39,14 @@ const requireStaff = requireRole(
   ROLES.BUS_INCHARGE
 );
 
+const requireStaffOrGuest = requireRole(
+  ROLES.SUPER_ADMIN,
+  ROLES.BUS_COORDINATOR,
+  ROLES.ACCOUNTS,
+  ROLES.BUS_INCHARGE,
+  ROLES.GUEST
+);
+
 module.exports = {
   ROLES,
   requireRole,
@@ -46,4 +55,5 @@ module.exports = {
   requireAccounts,
   requireBusIncharge,
   requireStaff,
+  requireStaffOrGuest,
 };

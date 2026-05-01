@@ -98,6 +98,8 @@ export const usersAPI = {
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   getIncharges: () => api.get('/users/incharges'),
+  getGuests: () => api.get('/users/guests'),
+  deleteGuest: (id) => api.delete(`/users/guests/${id}`),
 };
 
 export const analyticsAPI = {
