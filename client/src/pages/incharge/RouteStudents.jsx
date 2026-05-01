@@ -7,12 +7,13 @@ import Modal from '../../components/common/Modal';
 import { applicationsAPI, routesAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, exportToCSV } from '../../utils/helpers';
-import { Search, Download, MapPin } from 'lucide-react';
+import { Search, Download, MapPin, ChevronDown } from 'lucide-react';
 
 export default function RouteStudents() {
   const { userProfile } = useAuth();
   const [search, setSearch] = useState('');
   const [bpFilter, setBpFilter] = useState('');
+  const [collegeFilter, setCollegeFilter] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   const { data: allRoutes = [] } = useQuery({
@@ -30,11 +31,13 @@ export default function RouteStudents() {
 
   const allStudents = (appsData?.data || []).filter(a => a.routeId === myRoute?.id);
   const boardingPoints = [...new Set(allStudents.map(s => s.boardingPointName))];
+  const colleges = [...new Set(allStudents.map(s => s.college).filter(Boolean))];
 
   const filtered = allStudents.filter(s => {
-    const matchesSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.regNo.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.regNo?.toLowerCase().includes(search.toLowerCase());
     const matchesBP = !bpFilter || s.boardingPointName === bpFilter;
-    return matchesSearch && matchesBP;
+    const matchesCollege = !collegeFilter || s.college === collegeFilter;
+    return matchesSearch && matchesBP && matchesCollege;
   });
 
   const handleExport = () => {
@@ -64,10 +67,20 @@ export default function RouteStudents() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or reg no..." className="input pl-9" />
           </div>
-          <select value={bpFilter} onChange={e => setBpFilter(e.target.value)} className="input w-48">
-            <option value="">All Boarding Points</option>
-            {boardingPoints.map(bp => <option key={bp} value={bp}>{bp}</option>)}
-          </select>
+          <div className="select-wrapper w-48">
+            <select value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)} className="select">
+              <option value="">All Colleges</option>
+              {colleges.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <ChevronDown size={15} className="select-chevron" />
+          </div>
+          <div className="select-wrapper w-48">
+            <select value={bpFilter} onChange={e => setBpFilter(e.target.value)} className="select">
+              <option value="">All Boarding Points</option>
+              {boardingPoints.map(bp => <option key={bp} value={bp}>{bp}</option>)}
+            </select>
+            <ChevronDown size={15} className="select-chevron" />
+          </div>
           <button onClick={handleExport} className="btn-outline text-xs ml-auto">
             <Download size={14} /> Export
           </button>
