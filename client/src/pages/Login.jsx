@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -179,6 +179,13 @@ export default function Login() {
                 <p className="text-blue-600 text-xs mt-0.5">New student registrations will open shortly. Stay tuned!</p>
               </div>
             </div>
+
+            <Link
+              to="/register"
+              className="mt-3 flex items-center justify-center w-full py-2.5 rounded-xl border-2 border-primary-600 text-primary-600 text-sm font-semibold hover:bg-primary-50 transition-colors"
+            >
+              Create an Account
+            </Link>
           </div>
 
           <p className="text-center text-[11px] text-gray-400 select-none mt-6">
