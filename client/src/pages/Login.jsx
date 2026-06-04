@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -176,13 +176,7 @@ export default function Login() {
               <Clock size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-blue-800 text-xs font-semibold">Registrations Opening Soon</p>
-                <p className="text-blue-600 text-xs mt-0.5">
-                  New student registrations will open shortly.{' '}
-                  <Link to="/register" className="font-medium underline underline-offset-2">
-                    Register here
-                  </Link>
-                  {' '}to get early access.
-                </p>
+                <p className="text-blue-600 text-xs mt-0.5">New student registrations will open shortly. Stay tuned!</p>
               </div>
             </div>
           </div>
