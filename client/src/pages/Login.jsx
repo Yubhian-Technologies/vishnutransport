@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles } from 'lucide-react';
+import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, Clock } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -68,6 +68,11 @@ export default function Login() {
               <p className="font-bold text-lg leading-tight">Vishnu Transportation</p>
               <p className="text-blue-300 text-xs tracking-wide">College Bus Management</p>
             </div>
+          </div>
+
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 mb-6">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+            <span className="text-xs font-medium text-white/90 tracking-wide">Registrations Opening Soon</span>
           </div>
 
           <h2 className="text-4xl font-extrabold leading-tight mb-4">
@@ -167,12 +172,19 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-600 mt-5">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-primary-600 font-medium hover:underline">
-                Register here
-              </Link>
-            </p>
+            <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
+              <Clock size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-blue-800 text-xs font-semibold">Registrations Opening Soon</p>
+                <p className="text-blue-600 text-xs mt-0.5">
+                  New student registrations will open shortly.{' '}
+                  <Link to="/register" className="font-medium underline underline-offset-2">
+                    Register here
+                  </Link>
+                  {' '}to get early access.
+                </p>
+              </div>
+            </div>
           </div>
 
           <p className="text-center text-[11px] text-gray-400 select-none mt-6">
