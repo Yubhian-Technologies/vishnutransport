@@ -6,7 +6,7 @@ const createInchargeApplication = async (routeId, routeData, inchargeId) => {
   const user = userDoc.data();
 
   const fullFare = Number(routeData.fare) || 0;
-  const fare = Math.round(fullFare * 0.5);
+  const dueAmount = Math.round(fullFare * 0.5);
   const now = new Date().toISOString();
 
   await db.collection('applications').add({
@@ -17,8 +17,10 @@ const createInchargeApplication = async (routeId, routeData, inchargeId) => {
     regNo: user.employeeId || user.regNo || '',
     routeId,
     routeName: routeData.routeName,
-    fare,
+    fare: 0,
     fullFare,
+    dueAmount,
+    dueStatus: 'pending_upload',
     paymentType: 'incharge_concession',
     concessionReason: '50% staff concession for bus incharge',
     status: 'approved_final',
@@ -41,8 +43,13 @@ const createInchargeApplication = async (routeId, routeData, inchargeId) => {
     utrNumber: '',
     paymentProofUrl: null,
     paymentProofPublicId: null,
-    dueAmount: 0,
-    dueStatus: null,
+    duePaymentProofUrl: null,
+    duePaymentPublicId: null,
+    duePaymentSubmittedAt: null,
+    dueUtrNumber: '',
+    dueRejectionReason: null,
+    dueReviewedBy: null,
+    dueReviewedAt: null,
     seatNumber: null,
     l1ReviewedBy: 'system',
     l1ReviewedAt: now,

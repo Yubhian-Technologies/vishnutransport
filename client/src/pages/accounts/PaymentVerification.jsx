@@ -91,10 +91,10 @@ export default function PaymentVerification() {
     onError: e => toast.error(e.message),
   });
 
-  const rawApps = (data?.data || []).filter(a => a.applicantRole !== 'bus_incharge');
+  const rawApps = data?.data || [];
   const baseApps = isDueTab
     ? rawApps.filter(a => a.dueStatus === 'pending_verification')
-    : rawApps;
+    : rawApps.filter(a => a.applicantRole !== 'bus_incharge');
 
   const apps = baseApps
     .filter(a => !routeFilter || a.routeId === routeFilter)
