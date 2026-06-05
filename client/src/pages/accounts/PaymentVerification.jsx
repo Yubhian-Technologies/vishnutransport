@@ -327,7 +327,11 @@ export default function PaymentVerification() {
                   ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : selectedApp.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'],
                   ['Gender', selectedApp.gender ? selectedApp.gender.charAt(0).toUpperCase() + selectedApp.gender.slice(1) : '—'],
                   ['Blood Group', selectedApp.bloodGroup || '—'],
-                  ...(selectedApp.applicantRole === 'bus_incharge' ? [] : [
+                  ...(selectedApp.applicantRole === 'bus_incharge' ? [
+                    ['Employee ID', selectedApp.regNo || '—'],
+                    ['Branch / Dept.', selectedApp.branch || '—'],
+                    ['College', selectedApp.college || '—'],
+                  ] : [
                     [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
                     ['Reg. No.', selectedApp.regNo || '—'],
                     ['Branch', selectedApp.branch || '—'],

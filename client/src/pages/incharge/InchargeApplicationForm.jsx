@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { routesAPI, boardingPointsAPI, applicationsAPI } from '../../utils/api';
+import { routesAPI, boardingPointsAPI, applicationsAPI, collegesAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
@@ -15,8 +15,11 @@ import { Upload, X, Bus, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const schema = z.object({
   nameAsPerSSC: z.string().min(2, 'Full name required'),
+  employeeId: z.string().min(1, 'Employee ID required'),
   gender: z.enum(['male', 'female', 'other'], { required_error: 'Gender required' }),
   bloodGroup: z.string().min(1, 'Blood group required'),
+  branch: z.string().min(1, 'Branch / Department required'),
+  collegeId: z.string().min(1, 'College required'),
   address: z.string().min(5, 'Address required'),
   studentPhone: z.string().min(10, 'Phone number required'),
   emergencyContact: z.string().min(10, 'Emergency contact required'),
@@ -55,20 +58,28 @@ export default function InchargeApplicationForm() {
   });
   const myRoute = myRoutes[0] || null;
 
+  const { data: colleges = [] } = useQuery({
+    queryKey: ['colleges'],
+    queryFn: collegesAPI.getAll,
+  });
+
   const { data: boardingPoints = [] } = useQuery({
     queryKey: ['boarding-points', myRoute?.id],
     queryFn: () => boardingPointsAPI.getByRoute(myRoute.id),
     enabled: !!myRoute?.id,
   });
 
-  const { register, handleSubmit, watch, trigger, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, watch, trigger, setValue, formState: { errors }, reset } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      nameAsPerSSC: userProfile?.name || '',
-      gender: userProfile?.gender || '',
-      bloodGroup: userProfile?.bloodGroup || '',
-      address: userProfile?.address || '',
-      studentPhone: userProfile?.phone || '',
+      nameAsPerSSC: '',
+      employeeId: '',
+      gender: '',
+      bloodGroup: '',
+      branch: '',
+      collegeId: '',
+      address: '',
+      studentPhone: '',
       emergencyContact: '',
       boardingPointId: '',
       utrNumber: '',
@@ -82,6 +93,8 @@ export default function InchargeApplicationForm() {
         nameAsPerSSC: userProfile.nameAsPerSSC || userProfile.name || prev.nameAsPerSSC,
         gender: userProfile.gender || prev.gender,
         bloodGroup: userProfile.bloodGroup || prev.bloodGroup,
+        branch: userProfile.branch || prev.branch,
+        collegeId: userProfile.collegeId || prev.collegeId,
         address: userProfile.address || prev.address,
         studentPhone: userProfile.studentPhone || userProfile.phone || prev.studentPhone,
       }));
@@ -89,7 +102,9 @@ export default function InchargeApplicationForm() {
   }, [userProfile]);
 
   const watchedBPId = watch('boardingPointId');
+  const watchedCollegeId = watch('collegeId');
   const selectedBP = boardingPoints.find(b => b.id === watchedBPId);
+  const selectedCollege = colleges.find(c => c.id === watchedCollegeId);
   const fullFare = selectedBP?.fare != null ? selectedBP.fare : myRoute?.fare || 0;
   const inchargeFare = Math.round(fullFare * 0.5);
 
@@ -105,7 +120,7 @@ export default function InchargeApplicationForm() {
   });
 
   const STEP_FIELDS = [
-    ['nameAsPerSSC', 'gender', 'bloodGroup', 'address', 'studentPhone', 'emergencyContact'],
+    ['nameAsPerSSC', 'employeeId', 'gender', 'bloodGroup', 'branch', 'collegeId', 'address', 'studentPhone', 'emergencyContact'],
     ['boardingPointId'],
     [],
   ];
@@ -131,8 +146,12 @@ export default function InchargeApplicationForm() {
       formData.append('name', data.nameAsPerSSC);
       formData.append('nameAsPerSSC', data.nameAsPerSSC);
       formData.append('email', currentUser.email);
+      formData.append('regNo', data.employeeId);
       formData.append('gender', data.gender);
       formData.append('bloodGroup', data.bloodGroup);
+      formData.append('branch', data.branch);
+      formData.append('collegeId', data.collegeId);
+      formData.append('college', selectedCollege?.name || '');
       formData.append('address', data.address);
       formData.append('studentPhone', data.studentPhone);
       formData.append('emergencyContact', data.emergencyContact);
@@ -141,10 +160,6 @@ export default function InchargeApplicationForm() {
       formData.append('paymentType', 'full');
       if (data.utrNumber) formData.append('utrNumber', data.utrNumber);
       formData.append('paymentProof', paymentFile);
-      // Required but not applicable for incharge
-      formData.append('regNo', '');
-      formData.append('collegeId', '');
-      formData.append('college', '');
 
       await applicationsAPI.submit(formData);
       toast.success('Application submitted successfully!');
@@ -170,7 +185,17 @@ export default function InchargeApplicationForm() {
     );
   }
 
-  const values = { nameAsPerSSC: watch('nameAsPerSSC'), gender: watch('gender'), bloodGroup: watch('bloodGroup'), address: watch('address'), studentPhone: watch('studentPhone'), emergencyContact: watch('emergencyContact'), utrNumber: watch('utrNumber') };
+  const values = {
+    nameAsPerSSC: watch('nameAsPerSSC'),
+    employeeId: watch('employeeId'),
+    gender: watch('gender'),
+    bloodGroup: watch('bloodGroup'),
+    branch: watch('branch'),
+    address: watch('address'),
+    studentPhone: watch('studentPhone'),
+    emergencyContact: watch('emergencyContact'),
+    utrNumber: watch('utrNumber'),
+  };
 
   return (
     <Layout title="Bus Pass Application">
@@ -212,6 +237,26 @@ export default function InchargeApplicationForm() {
                     <label className="label">Full Name *</label>
                     <input {...register('nameAsPerSSC')} placeholder="As per official records" className={`input ${errors.nameAsPerSSC ? 'input-error' : ''}`} />
                     {errors.nameAsPerSSC && <p className="text-red-500 text-xs mt-1">{errors.nameAsPerSSC.message}</p>}
+                  </div>
+                  <div>
+                    <label className="label">Employee ID *</label>
+                    <input {...register('employeeId')} placeholder="e.g. EMP001" className={`input ${errors.employeeId ? 'input-error' : ''}`} />
+                    {errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId.message}</p>}
+                  </div>
+                  <div>
+                    <label className="label">Branch / Department *</label>
+                    <input {...register('branch')} placeholder="e.g. CSE, Administration" className={`input ${errors.branch ? 'input-error' : ''}`} />
+                    {errors.branch && <p className="text-red-500 text-xs mt-1">{errors.branch.message}</p>}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="label">College *</label>
+                    <div className="select-wrapper">
+                      <select {...register('collegeId')} className={`select ${errors.collegeId ? 'input-error' : ''}`}>
+                        <option value="">Select College</option>
+                        {colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    {errors.collegeId && <p className="text-red-500 text-xs mt-1">{errors.collegeId.message}</p>}
                   </div>
                   <div>
                     <label className="label">Gender *</label>
@@ -347,6 +392,9 @@ export default function InchargeApplicationForm() {
                 <div className="space-y-3 text-sm">
                   {[
                     ['Name', values.nameAsPerSSC],
+                    ['Employee ID', values.employeeId],
+                    ['Branch / Dept.', values.branch],
+                    ['College', selectedCollege?.name || '—'],
                     ['Gender', values.gender],
                     ['Blood Group', values.bloodGroup],
                     ['Phone', values.studentPhone],

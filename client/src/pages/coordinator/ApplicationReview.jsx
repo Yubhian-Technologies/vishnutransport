@@ -326,7 +326,11 @@ export default function ApplicationReview() {
                   ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : selectedApp.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'],
                   ['Gender', selectedApp.gender ? selectedApp.gender.charAt(0).toUpperCase() + selectedApp.gender.slice(1) : '—'],
                   ['Blood Group', selectedApp.bloodGroup || '—'],
-                  ...(selectedApp.applicantRole === 'bus_incharge' ? [] : [
+                  ...(selectedApp.applicantRole === 'bus_incharge' ? [
+                    ['Employee ID', selectedApp.regNo || '—'],
+                    ['Branch / Dept.', selectedApp.branch || '—'],
+                    ['College', selectedApp.college || '—'],
+                  ] : [
                     [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
                     ['Reg No', selectedApp.regNo || '—'],
                     ['Branch', selectedApp.branch || '—'],
@@ -366,8 +370,8 @@ export default function ApplicationReview() {
                   ['Route', selectedApp.routeName],
                   ['Bus Number', busNumberMap[selectedApp.routeId] || '—'],
                   ['Boarding Point', selectedApp.boardingPointName],
-                  ['Payment Type', (() => { if (selectedApp.paymentType === 'concession') return 'Fee Concession'; const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
-                  ['Total Fare', formatCurrency(selectedApp.paymentType === 'concession' ? selectedApp.fare : (selectedApp.fullFare || selectedApp.fare))],
+                  ['Payment Type', (() => { if (selectedApp.paymentType === 'concession') return 'Fee Concession'; if (selectedApp.paymentType === 'incharge_concession') return 'Incharge Concession (50%)'; const c = (selectedApp.paymentType === 'partial' || selectedApp.paymentType === 'coordinator_partial') && selectedApp.dueStatus === 'verified'; return selectedApp.paymentType === 'full' || c ? 'Full' : selectedApp.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : 'Partial'; })()],
+                  ['Total Fare', formatCurrency(selectedApp.paymentType === 'concession' || selectedApp.paymentType === 'incharge_concession' ? selectedApp.fare : (selectedApp.fullFare || selectedApp.fare))],
                   ...(selectedApp.paymentType === 'coordinator_partial' && selectedApp.dueStatus !== 'verified' ? [
                     ['Paid (Initial)', formatCurrency(selectedApp.fare)],
                     ['Due Amount', `${formatCurrency(selectedApp.dueAmount || 0)} (${selectedApp.dueStatus || 'pending'})`],

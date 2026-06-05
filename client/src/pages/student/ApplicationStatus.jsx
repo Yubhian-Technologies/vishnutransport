@@ -96,8 +96,9 @@ function DuePaymentUploader({ appId }) {
 }
 
 export default function ApplicationStatus() {
-  const { role } = useAuth();
-  const base = role === 'faculty' ? '/faculty' : '/student';
+  const { role, userProfile } = useAuth();
+  const base = role === 'faculty' ? '/faculty' : role === 'bus_incharge' ? '/incharge' : '/student';
+  const isIncharge = role === 'bus_incharge' || userProfile?.role === 'bus_incharge';
   const { data: apps = [], isLoading } = useQuery({
     queryKey: ['my-applications'],
     queryFn: applicationsAPI.getMy,
@@ -116,6 +117,7 @@ export default function ApplicationStatus() {
           <Link to={`${base}/apply`} className="btn-primary inline-flex mt-4">
             Apply Now
           </Link>
+
         </div>
       </Layout>
     );
@@ -136,13 +138,13 @@ export default function ApplicationStatus() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             {[
               ['Name', app.name],
-              ['Reg. No.', app.regNo],
-              ['Branch', app.branch],
-              ['College', app.college],
+              isIncharge ? ['Employee ID', app.regNo || '—'] : ['Reg. No.', app.regNo],
+              ['Branch', app.branch || '—'],
+              ['College', app.college || '—'],
               ['Route', app.routeName],
               ['Boarding Point', app.boardingPointName],
-              [app.paymentType === 'concession' ? 'Concession Fare' : 'Fare Paid', formatCurrency(app.paymentType === 'concession' ? (app.fare || app.fullFare) : app.fare)],
-              ['Payment Type', app.paymentType === 'concession' ? 'Fee Concession' : app.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : app.paymentType === 'partial' ? 'Partial' : 'Full'],
+              [app.paymentType === 'concession' || app.paymentType === 'incharge_concession' ? 'Concession Fare' : 'Fare Paid', formatCurrency(app.fare)],
+              ['Payment Type', app.paymentType === 'concession' ? 'Fee Concession' : app.paymentType === 'incharge_concession' ? 'Incharge Concession (50%)' : app.paymentType === 'coordinator_partial' ? 'Coordinator Partial' : app.paymentType === 'partial' ? 'Partial' : 'Full'],
               ...(app.utrNumber ? [['Transaction / UTR No.', app.utrNumber]] : []),
               ['Submitted', formatDateTime(app.submittedAt)],
             ].map(([label, value]) => (
@@ -153,9 +155,11 @@ export default function ApplicationStatus() {
             ))}
           </div>
 
-          {app.paymentType === 'concession' && app.concessionReason && (
+          {(app.paymentType === 'concession' || app.paymentType === 'incharge_concession') && app.concessionReason && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm font-semibold text-green-800">Fee Concession Applied</p>
+              <p className="text-sm font-semibold text-green-800">
+                {app.paymentType === 'incharge_concession' ? '50% Staff Concession Applied' : 'Fee Concession Applied'}
+              </p>
               <p className="text-xs text-green-700 mt-0.5">Reason: {app.concessionReason}</p>
               {app.fullFare && app.fare !== app.fullFare && (
                 <p className="text-xs text-green-600 mt-0.5">Full fare: {formatCurrency(app.fullFare)} → Concession fare: {formatCurrency(app.fare)}</p>
