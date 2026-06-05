@@ -67,7 +67,7 @@ export default function CoordinatorDashboard() {
                   <Link to="/coordinator/analytics" className="text-sm text-primary-600 hover:underline">Full Analytics →</Link>
                 </div>
                 <div className="space-y-3">
-                  {routeStats.slice(0, 5).map(route => (
+                  {routeStats.map(route => (
                     <div key={route.routeId} className="flex items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
