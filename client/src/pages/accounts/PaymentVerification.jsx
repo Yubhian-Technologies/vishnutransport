@@ -94,11 +94,11 @@ export default function PaymentVerification() {
   const rawApps = data?.data || [];
   const baseApps = isDueTab
     ? rawApps.filter(a => a.dueStatus === 'pending_verification')
-    : rawApps.filter(a => a.applicantRole !== 'bus_incharge');
+    : rawApps;
 
   const apps = baseApps
     .filter(a => !routeFilter || a.routeId === routeFilter)
-    .filter(a => !collegeFilter || a.college === collegeFilter)
+    .filter(a => !collegeFilter || a.applicantRole === 'bus_incharge' || a.college === collegeFilter)
     .filter(a => !statusFilterInline || (isDueTab ? a.dueStatus === statusFilterInline : a.status === statusFilterInline))
     .filter(a => {
       if (!paymentTypeFilter) return true;
@@ -134,7 +134,7 @@ export default function PaymentVerification() {
               'S.No.': i + 1,
               Name: a.name,
               RegNo: a.regNo,
-              Type: a.applicantRole === 'faculty' ? 'Faculty' : 'Student',
+              Type: a.applicantRole === 'faculty' ? 'Faculty' : a.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student',
               College: a.college || '—',
               Route: a.routeName,
               'Bus No.': busNumberMap[a.routeId] || '—',
@@ -234,9 +234,9 @@ export default function PaymentVerification() {
                     <td className="text-sm text-gray-500 text-center">{idx + 1}</td>
                     <td>
                       <p className="font-medium">{app.name}</p>
-                      <p className="text-xs text-gray-400">{app.regNo}</p>
-                      <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium mt-0.5 ${app.applicantRole === 'faculty' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {app.applicantRole === 'faculty' ? 'Faculty' : 'Student'}
+                      {app.applicantRole !== 'bus_incharge' && <p className="text-xs text-gray-400">{app.regNo}</p>}
+                      <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium mt-0.5 ${app.applicantRole === 'faculty' ? 'bg-teal-100 text-teal-700' : app.applicantRole === 'bus_incharge' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {app.applicantRole === 'faculty' ? 'Faculty' : app.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'}
                       </span>
                     </td>
                     <td className="text-sm text-gray-700">{app.college || '—'}</td>
@@ -324,13 +324,15 @@ export default function PaymentVerification() {
                 {[
                   ['Name', selectedApp.name],
                   ['Name as per SSC', selectedApp.nameAsPerSSC || '—'],
-                  ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : 'Student'],
+                  ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : selectedApp.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'],
                   ['Gender', selectedApp.gender ? selectedApp.gender.charAt(0).toUpperCase() + selectedApp.gender.slice(1) : '—'],
                   ['Blood Group', selectedApp.bloodGroup || '—'],
-                  [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
-                  ['Reg. No.', selectedApp.regNo],
-                  ['Branch', selectedApp.branch],
-                  ['College', selectedApp.college || '—'],
+                  ...(selectedApp.applicantRole === 'bus_incharge' ? [] : [
+                    [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
+                    ['Reg. No.', selectedApp.regNo || '—'],
+                    ['Branch', selectedApp.branch || '—'],
+                    ['College', selectedApp.college || '—'],
+                  ]),
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 p-2.5 rounded-lg">
                     <p className="text-xs text-gray-500">{label}</p>

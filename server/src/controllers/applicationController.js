@@ -43,14 +43,14 @@ const submitApplication = async (req, res) => {
       }
     }
 
-    const [routeDoc, collegeDoc, bpDoc] = await Promise.all([
+    const [routeDoc, bpDoc, collegeDoc] = await Promise.all([
       db.collection('busRoutes').doc(routeId).get(),
-      db.collection('colleges').doc(collegeId).get(),
       db.collection('boardingPoints').doc(boardingPointId).get(),
+      collegeId ? db.collection('colleges').doc(collegeId).get() : Promise.resolve(null),
     ]);
 
     if (!routeDoc.exists) return res.status(404).json({ error: 'Route not found' });
-    if (!collegeDoc.exists) return res.status(404).json({ error: 'College not found' });
+    if (!isIncharge && (!collegeDoc || !collegeDoc.exists)) return res.status(404).json({ error: 'College not found' });
     if (!bpDoc.exists) return res.status(404).json({ error: 'Boarding point not found' });
 
     const route = routeDoc.data();

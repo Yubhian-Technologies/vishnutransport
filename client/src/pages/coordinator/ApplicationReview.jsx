@@ -75,9 +75,8 @@ export default function ApplicationReview() {
 
   const apps = useMemo(() => {
     return allApps.filter(app => {
-      if (app.applicantRole === 'bus_incharge') return false;
-      if (search && !app.name.toLowerCase().includes(search.toLowerCase()) && !app.regNo.toLowerCase().includes(search.toLowerCase())) return false;
-      if (collegeFilter && app.college !== collegeFilter) return false;
+      if (search && !app.name.toLowerCase().includes(search.toLowerCase()) && !(app.regNo || '').toLowerCase().includes(search.toLowerCase())) return false;
+      if (collegeFilter && app.applicantRole !== 'bus_incharge' && app.college !== collegeFilter) return false;
       if (routeFilter && app.routeId !== routeFilter) return false;
       if (dueFilter) {
         const isPartial = app.paymentType === 'partial' || app.paymentType === 'coordinator_partial';
@@ -250,13 +249,15 @@ export default function ApplicationReview() {
                     <td className="text-center text-xs text-gray-400 font-medium">{idx + 1}</td>
                     <td>
                       <p className="font-medium">{app.name}</p>
-                      <p className="text-xs text-gray-400">{app.regNo} · {app.branch}</p>
-                      <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium mt-0.5 ${app.applicantRole === 'faculty' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {app.applicantRole === 'faculty' ? 'Faculty' : 'Student'}
+                      {app.applicantRole !== 'bus_incharge' && (
+                        <p className="text-xs text-gray-400">{app.regNo} · {app.branch}</p>
+                      )}
+                      <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium mt-0.5 ${app.applicantRole === 'faculty' ? 'bg-teal-100 text-teal-700' : app.applicantRole === 'bus_incharge' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {app.applicantRole === 'faculty' ? 'Faculty' : app.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'}
                       </span>
                     </td>
                     <td>
-                      <p className="text-sm">{app.college}</p>
+                      <p className="text-sm">{app.college || '—'}</p>
                       <p className="text-xs text-gray-400">{app.routeName}</p>
                       {busNumberMap[app.routeId] && (
                         <p className="text-xs text-indigo-600 font-medium">Bus: {busNumberMap[app.routeId]}</p>
@@ -322,14 +323,16 @@ export default function ApplicationReview() {
                 {[
                   ['Name', selectedApp.name],
                   ['Name as per SSC', selectedApp.nameAsPerSSC || '—'],
-                  ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : 'Student'],
+                  ['Type', selectedApp.applicantRole === 'faculty' ? 'Faculty' : selectedApp.applicantRole === 'bus_incharge' ? 'Bus Incharge' : 'Student'],
                   ['Gender', selectedApp.gender ? selectedApp.gender.charAt(0).toUpperCase() + selectedApp.gender.slice(1) : '—'],
                   ['Blood Group', selectedApp.bloodGroup || '—'],
-                  [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
-                  ['Reg No', selectedApp.regNo],
-                  ['Branch', selectedApp.branch],
-                  ['Aadhaar', selectedApp.aadhaar || '—'],
-                  ['College', selectedApp.college],
+                  ...(selectedApp.applicantRole === 'bus_incharge' ? [] : [
+                    [selectedApp.applicantRole === 'faculty' ? 'Date of Joining' : 'Academic Year', selectedApp.applicantRole === 'faculty' ? (selectedApp.dateOfJoining || '—') : (selectedApp.academicYear ? `Year ${selectedApp.academicYear}` : '—')],
+                    ['Reg No', selectedApp.regNo || '—'],
+                    ['Branch', selectedApp.branch || '—'],
+                    ['Aadhaar', selectedApp.aadhaar || '—'],
+                    ['College', selectedApp.college || '—'],
+                  ]),
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 p-2.5 rounded-lg">
                     <p className="text-xs text-gray-500">{label}</p>
