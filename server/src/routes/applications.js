@@ -17,12 +17,12 @@ const {
 router.post(
   '/',
   verifyToken,
-  requireRole(ROLES.STUDENT, ROLES.FACULTY),
+  requireRole(ROLES.STUDENT, ROLES.FACULTY, ROLES.BUS_INCHARGE),
   upload.single('paymentProof'),
   submitApplication
 );
 
-router.get('/my', verifyToken, requireRole(ROLES.STUDENT, ROLES.FACULTY), getMyApplication);
+router.get('/my', verifyToken, requireRole(ROLES.STUDENT, ROLES.FACULTY, ROLES.BUS_INCHARGE), getMyApplication);
 router.get('/', verifyToken, getAllApplications);
 router.get('/:id', verifyToken, getApplication);
 
