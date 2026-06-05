@@ -44,6 +44,20 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Cache-Control for GET-only, safe endpoints (colleges/routes rarely change)
+app.use((req, res, next) => {
+  if (req.method === 'GET') {
+    if (req.path.startsWith('/api/colleges') || req.path.startsWith('/api/boarding-points')) {
+      res.set('Cache-Control', 'private, max-age=120'); // 2 min browser cache
+    } else if (req.path.startsWith('/api/analytics') || req.path.startsWith('/api/bus-routes')) {
+      res.set('Cache-Control', 'private, max-age=30'); // 30 sec browser cache
+    } else {
+      res.set('Cache-Control', 'no-store'); // auth-sensitive: no cache
+    }
+  }
+  next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/bus-routes', busRoutes);

@@ -18,15 +18,20 @@ const getAllRoutes = async (req, res) => {
       .sort((a, b) => (a.routeName || '').localeCompare(b.routeName || ''));
 
     if (req.query.includeOccupancy === 'true') {
+      // Single read for all applications instead of one per route (N→1)
       const RELEASED = ['rejected_l1', 'rejected_l2'];
-      await Promise.all(routes.map(async (route) => {
-        const apps = await db.collection('applications')
-          .where('routeId', '==', route.id)
-          .get();
-        const held = apps.docs.filter(d => !RELEASED.includes(d.data().status)).length;
-        route.occupiedSeats = held;
-        route.availableSeats = route.seatCapacity - held;
-      }));
+      const allApps = await db.collection('applications').select('routeId', 'status').get();
+      const countByRoute = {};
+      allApps.docs.forEach(doc => {
+        const d = doc.data();
+        if (!RELEASED.includes(d.status)) {
+          countByRoute[d.routeId] = (countByRoute[d.routeId] || 0) + 1;
+        }
+      });
+      routes.forEach(route => {
+        route.occupiedSeats = countByRoute[route.id] || 0;
+        route.availableSeats = route.seatCapacity - route.occupiedSeats;
+      });
     }
 
     res.json(routes);

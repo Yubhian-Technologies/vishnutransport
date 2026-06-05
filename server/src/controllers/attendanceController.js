@@ -120,11 +120,14 @@ const getRouteAttendance = async (req, res) => {
     const routeId = routeSnap.docs[0].id;
     const routeName = routeSnap.docs[0].data().routeName;
 
-    let snap = await db.collection('attendance').where('routeId', '==', routeId).get();
-    let records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Push date filter to Firestore instead of fetching all route attendance
+    let query = db.collection('attendance').where('routeId', '==', routeId);
+    if (date) query = query.where('date', '==', date);
 
-    if (date) records = records.filter(r => r.date === date);
-    records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const snap = await query.get();
+    const records = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
     res.json({ records, routeName });
   } catch (error) {
@@ -138,12 +141,15 @@ const getAllAttendance = async (req, res) => {
   try {
     const { date, routeId } = req.query;
 
-    let snap = await db.collection('attendance').get();
-    let records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Push filters to Firestore — avoid full-collection scan
+    let query = db.collection('attendance');
+    if (routeId) query = query.where('routeId', '==', routeId);
+    if (date) query = query.where('date', '==', date);
 
-    if (date) records = records.filter(r => r.date === date);
-    if (routeId) records = records.filter(r => r.routeId === routeId);
-    records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const snap = await query.get();
+    const records = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
     res.json(records);
   } catch (error) {

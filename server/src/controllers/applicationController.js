@@ -201,7 +201,7 @@ const getMyApplication = async (req, res) => {
 
 const getAllApplications = async (req, res) => {
   try {
-    const { status, collegeId, routeId, page = 1, limit = 20 } = req.query;
+    const { status, collegeId, routeId, page = 1, limit = 50 } = req.query;
     let query = db.collection('applications');
 
     const role = req.user.role;
@@ -239,11 +239,14 @@ const getAllApplications = async (req, res) => {
       query = query.where('status', '==', status);
     }
 
+    // Push routeId filter to Firestore when possible
+    if (routeId && role !== 'bus_incharge') query = query.where('routeId', '==', routeId);
+
     const snapshot = await query.get();
     let all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+    // collegeId still filtered in memory (multiple equality where + status where might not have index)
     if (collegeId) all = all.filter(a => a.collegeId === collegeId);
-    if (routeId) all = all.filter(a => a.routeId === routeId);
 
     all = all.sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
 

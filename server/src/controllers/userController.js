@@ -4,20 +4,24 @@ const { uploadToCloud, deleteFromCloud } = require('../middleware/upload');
 
 const getAllUsers = async (req, res) => {
   try {
-    const { role, page = 1, limit = 20 } = req.query;
-    let query = db.collection('users');
-    if (role) query = query.where('role', '==', role);
+    const { role, page = 1, limit = 50 } = req.query;
+    let query = db.collection('users').orderBy('createdAt', 'desc');
+    if (role) query = db.collection('users').where('role', '==', role).orderBy('createdAt', 'desc');
 
-    const snapshot = await query.get();
-    const all = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-    const start = (Number(page) - 1) * Number(limit);
+    // Get total count in parallel with paginated data
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+
+    // Firestore cursor-based pagination would be ideal but requires tracking last doc.
+    // For now, fetch with limit to avoid loading all users.
+    const snapshot = await query.limit(limitNum * pageNum).get();
+    const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const start = (pageNum - 1) * limitNum;
 
     res.json({
-      data: all.slice(start, start + Number(limit)),
+      data: all.slice(start, start + limitNum),
       total: all.length,
-      page: Number(page),
+      page: pageNum,
     });
   } catch (error) {
     console.error('Get users error:', error);
