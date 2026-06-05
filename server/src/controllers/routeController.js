@@ -274,7 +274,7 @@ const assignIncharge = async (req, res) => {
     if (!routeDoc.exists) return res.status(404).json({ error: 'Route not found' });
     const routeData = routeDoc.data();
 
-    if (routeData.inchargeId && routeData.inchargeId !== inchargeId) {
+    if (routeData.inchargeId) {
       await removeInchargeApplication(routeData.inchargeId).catch(console.error);
     }
 
@@ -291,4 +291,36 @@ const assignIncharge = async (req, res) => {
   }
 };
 
-module.exports = { getAllRoutes, getRoute, createRoute, updateRoute, deleteRoute, assignIncharge };
+const migrateInchargeApplications = async (req, res) => {
+  try {
+    const routesSnap = await db.collection('busRoutes').get();
+    const routes = routesSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(r => r.inchargeId);
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const route of routes) {
+      const existing = await db.collection('applications')
+        .where('studentId', '==', route.inchargeId)
+        .where('applicantRole', '==', 'bus_incharge')
+        .get();
+
+      if (!existing.empty) {
+        skipped++;
+        continue;
+      }
+
+      await createInchargeApplication(route.id, route, route.inchargeId).catch(console.error);
+      created++;
+    }
+
+    res.json({ message: `Migration complete. Created: ${created}, Skipped (already existed): ${skipped}` });
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({ error: 'Migration failed' });
+  }
+};
+
+module.exports = { getAllRoutes, getRoute, createRoute, updateRoute, deleteRoute, assignIncharge, migrateInchargeApplications };
