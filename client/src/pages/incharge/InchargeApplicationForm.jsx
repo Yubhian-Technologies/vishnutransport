@@ -48,12 +48,12 @@ export default function InchargeApplicationForm() {
     }
   }, [appsLoading, hasActiveApp, navigate]);
 
-  const { data: allRoutes = [], isLoading: routesLoading } = useQuery({
-    queryKey: ['routes'],
-    queryFn: () => routesAPI.getAll({ includeOccupancy: 'true' }),
+  const { data: myRoutes = [], isLoading: routesLoading } = useQuery({
+    queryKey: ['my-route', userProfile?.uid],
+    queryFn: () => routesAPI.getAll({ inchargeId: userProfile.uid, includeOccupancy: 'true' }),
+    enabled: !!userProfile?.uid,
   });
-
-  const myRoute = allRoutes.find(r => r.inchargeId === userProfile?.uid);
+  const myRoute = myRoutes[0] || null;
 
   const { data: boardingPoints = [] } = useQuery({
     queryKey: ['boarding-points', myRoute?.id],

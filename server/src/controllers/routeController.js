@@ -4,7 +4,9 @@ const getAllRoutes = async (req, res) => {
   try {
     let query = db.collection('busRoutes');
 
-    if (req.query.collegeId) {
+    if (req.query.inchargeId) {
+      query = query.where('inchargeId', '==', req.query.inchargeId);
+    } else if (req.query.collegeId) {
       query = query.where('collegeIds', 'array-contains', req.query.collegeId);
     } else {
       query = query.orderBy('routeName');
@@ -17,14 +19,14 @@ const getAllRoutes = async (req, res) => {
 
     if (req.query.includeOccupancy === 'true') {
       const RELEASED = ['rejected_l1', 'rejected_l2'];
-      for (const route of routes) {
+      await Promise.all(routes.map(async (route) => {
         const apps = await db.collection('applications')
           .where('routeId', '==', route.id)
           .get();
         const held = apps.docs.filter(d => !RELEASED.includes(d.data().status)).length;
         route.occupiedSeats = held;
         route.availableSeats = route.seatCapacity - held;
-      }
+      }));
     }
 
     res.json(routes);

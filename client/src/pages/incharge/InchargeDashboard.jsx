@@ -12,17 +12,17 @@ import { Users, MapPin, Bus, ArrowRight, FileText } from 'lucide-react';
 export default function InchargeDashboard() {
   const { userProfile } = useAuth();
 
-  const { data: allRoutes = [] } = useQuery({
-    queryKey: ['routes'],
-    queryFn: () => routesAPI.getAll({ includeOccupancy: 'true' }),
+  const { data: myRoutes = [], isLoading: routeLoading } = useQuery({
+    queryKey: ['my-route', userProfile?.uid],
+    queryFn: () => routesAPI.getAll({ inchargeId: userProfile.uid, includeOccupancy: 'true' }),
+    enabled: !!userProfile?.uid,
   });
-
-  const myRoute = allRoutes.find(r => r.inchargeId === userProfile?.uid);
+  const myRoute = myRoutes[0] || null;
 
   const { data: appsData, isLoading } = useQuery({
-    queryKey: ['applications', 'approved_final'],
-    queryFn: () => applicationsAPI.getAll({ status: 'approved_final' }),
-    enabled: !!myRoute,
+    queryKey: ['applications', 'route', myRoute?.id],
+    queryFn: () => applicationsAPI.getAll({ routeId: myRoute.id, status: 'approved_final' }),
+    enabled: !!myRoute?.id,
   });
 
   const { data: myApps = [] } = useQuery({
