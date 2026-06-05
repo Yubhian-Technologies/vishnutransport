@@ -49,11 +49,17 @@ export default function PaymentVerification() {
     return Object.fromEntries(routes.map(r => [r.id, r.busNumber]));
   }, [routesData]);
 
+  const invalidateAfterPayment = () => {
+    queryClient.invalidateQueries({ queryKey: ['applications-accounts'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['route-stats'] });
+  };
+
   const approveMutation = useMutation({
     mutationFn: (id) => applicationsAPI.accountsReview(id, { action: 'approve' }),
     onSuccess: () => {
       toast.success('Payment verified — seat confirmed!');
-      queryClient.invalidateQueries({ queryKey: ['applications-accounts'] });
+      invalidateAfterPayment();
       setSelectedApp(null);
     },
     onError: e => toast.error(e.message),
@@ -69,7 +75,7 @@ export default function PaymentVerification() {
       setRejectModal(false);
       setRejectReason('');
       setIsDueReject(false);
-      queryClient.invalidateQueries({ queryKey: ['applications-accounts'] });
+      invalidateAfterPayment();
       setSelectedApp(null);
     },
     onError: e => toast.error(e.message),
@@ -79,7 +85,7 @@ export default function PaymentVerification() {
     mutationFn: (id) => applicationsAPI.dueReview(id, { action: 'approve' }),
     onSuccess: () => {
       toast.success('Due payment verified!');
-      queryClient.invalidateQueries({ queryKey: ['applications-accounts'] });
+      invalidateAfterPayment();
       setSelectedApp(null);
     },
     onError: e => toast.error(e.message),

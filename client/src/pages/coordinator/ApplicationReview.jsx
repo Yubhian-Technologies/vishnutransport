@@ -90,11 +90,16 @@ export default function ApplicationReview() {
     });
   }, [allApps, search, collegeFilter, routeFilter, dueFilter, statusInlineFilter]);
 
+  const invalidateAfterReview = () => {
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+  };
+
   const approveMutation = useMutation({
     mutationFn: (id) => applicationsAPI.coordinatorReview(id, { action: 'approve' }),
     onSuccess: () => {
       toast.success('Application approved and sent to Accounts');
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      invalidateAfterReview();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -105,7 +110,7 @@ export default function ApplicationReview() {
       toast.success('Application rejected');
       setRejectModal(false);
       setRejectReason('');
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      invalidateAfterReview();
     },
     onError: (err) => toast.error(err.message),
   });

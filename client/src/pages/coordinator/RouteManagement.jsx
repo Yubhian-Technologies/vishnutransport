@@ -37,15 +37,21 @@ export default function RouteManagement() {
   });
   const { register: regBP, handleSubmit: handleBP, reset: resetBP } = useForm();
 
+  const invalidateRouteRelated = () => {
+    queryClient.invalidateQueries({ queryKey: ['routes'] });
+    queryClient.invalidateQueries({ queryKey: ['route-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+  };
+
   const updateRoute = useMutation({
     mutationFn: ({ id, data }) => routesAPI.update(id, data),
-    onSuccess: () => { toast.success('Route updated'); setEditRoute(null); queryClient.invalidateQueries({ queryKey: ['routes'] }); },
+    onSuccess: () => { toast.success('Route updated'); setEditRoute(null); invalidateRouteRelated(); },
     onError: e => toast.error(e.message),
   });
 
   const deleteRoute = useMutation({
     mutationFn: routesAPI.delete,
-    onSuccess: () => { toast.success('Route deleted'); queryClient.invalidateQueries({ queryKey: ['routes'] }); },
+    onSuccess: () => { toast.success('Route deleted'); invalidateRouteRelated(); },
     onError: e => toast.error(e.message),
   });
 
@@ -132,7 +138,7 @@ export default function RouteManagement() {
       );
       toast.success(`Route created with ${validBps.length} boarding point${validBps.length > 1 ? 's' : ''}`);
       closeRouteModal();
-      queryClient.invalidateQueries({ queryKey: ['routes'] });
+      invalidateRouteRelated();
       queryClient.invalidateQueries({ queryKey: ['boarding-points'] });
     } catch (err) {
       toast.error(err?.response?.data?.error || err.message || 'Failed to create route');
