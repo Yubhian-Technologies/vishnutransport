@@ -1,75 +1,5 @@
 const { db } = require('../config/firebase');
 
-const createInchargeApplication = async (routeId, routeData, inchargeId) => {
-  const userDoc = await db.collection('users').doc(inchargeId).get();
-  if (!userDoc.exists) return;
-  const user = userDoc.data();
-
-  const fullFare = Number(routeData.fare) || 0;
-  const dueAmount = Math.round(fullFare * 0.5);
-  const now = new Date().toISOString();
-
-  await db.collection('applications').add({
-    studentId: inchargeId,
-    applicantRole: 'bus_incharge',
-    name: user.name || '',
-    email: user.email || '',
-    regNo: user.employeeId || user.regNo || '',
-    routeId,
-    routeName: routeData.routeName,
-    fare: 0,
-    fullFare,
-    dueAmount,
-    dueStatus: 'pending_upload',
-    paymentType: 'incharge_concession',
-    concessionReason: '50% staff concession for bus incharge',
-    status: 'approved_final',
-    boardingPointId: null,
-    boardingPointName: '',
-    college: '',
-    collegeId: '',
-    nameAsPerSSC: '',
-    gender: user.gender || '',
-    bloodGroup: '',
-    academicYear: '',
-    dateOfJoining: '',
-    address: '',
-    aadhaar: '',
-    branch: '',
-    parentName: '',
-    parentPhone: '',
-    studentPhone: user.phone || '',
-    emergencyContact: '',
-    utrNumber: '',
-    paymentProofUrl: null,
-    paymentProofPublicId: null,
-    duePaymentProofUrl: null,
-    duePaymentPublicId: null,
-    duePaymentSubmittedAt: null,
-    dueUtrNumber: '',
-    dueRejectionReason: null,
-    dueReviewedBy: null,
-    dueReviewedAt: null,
-    seatNumber: null,
-    l1ReviewedBy: 'system',
-    l1ReviewedAt: now,
-    l2ReviewedBy: 'system',
-    l2ReviewedAt: now,
-    submittedAt: now,
-    updatedAt: now,
-  });
-};
-
-const removeInchargeApplication = async (inchargeId) => {
-  const snap = await db.collection('applications')
-    .where('studentId', '==', inchargeId)
-    .where('applicantRole', '==', 'bus_incharge')
-    .get();
-  const batch = db.batch();
-  snap.docs.forEach(doc => batch.delete(doc.ref));
-  await batch.commit();
-};
-
 const getAllRoutes = async (req, res) => {
   try {
     let query = db.collection('busRoutes');
@@ -179,11 +109,6 @@ const createRoute = async (req, res) => {
     };
 
     const docRef = await db.collection('busRoutes').add(data);
-
-    if (inchargeId) {
-      await createInchargeApplication(docRef.id, data, inchargeId).catch(console.error);
-    }
-
     res.status(201).json({ id: docRef.id, ...data });
   } catch (error) {
     console.error('Create route error:', error);
@@ -221,14 +146,6 @@ const updateRoute = async (req, res) => {
         }
       }
 
-      if (oldInchargeId && oldInchargeId !== newInchargeId) {
-        await removeInchargeApplication(oldInchargeId).catch(console.error);
-      }
-
-      if (newInchargeId && newInchargeId !== oldInchargeId) {
-        const routeData = { ...current, ...updates };
-        await createInchargeApplication(req.params.id, routeData, newInchargeId).catch(console.error);
-      }
     }
 
     await db.collection('busRoutes').doc(req.params.id).update(updates);
@@ -270,20 +187,10 @@ const assignIncharge = async (req, res) => {
       return res.status(409).json({ error: `This incharge is already assigned to route "${conflict.data().routeName}"` });
     }
 
-    const routeDoc = await db.collection('busRoutes').doc(req.params.id).get();
-    if (!routeDoc.exists) return res.status(404).json({ error: 'Route not found' });
-    const routeData = routeDoc.data();
-
-    if (routeData.inchargeId) {
-      await removeInchargeApplication(routeData.inchargeId).catch(console.error);
-    }
-
     await db.collection('busRoutes').doc(req.params.id).update({
       inchargeId,
       updatedAt: new Date().toISOString(),
     });
-
-    await createInchargeApplication(req.params.id, routeData, inchargeId).catch(console.error);
 
     res.json({ message: 'Incharge assigned successfully' });
   } catch (error) {
@@ -291,36 +198,4 @@ const assignIncharge = async (req, res) => {
   }
 };
 
-const migrateInchargeApplications = async (req, res) => {
-  try {
-    const routesSnap = await db.collection('busRoutes').get();
-    const routes = routesSnap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .filter(r => r.inchargeId);
-
-    let created = 0;
-    let skipped = 0;
-
-    for (const route of routes) {
-      const existing = await db.collection('applications')
-        .where('studentId', '==', route.inchargeId)
-        .where('applicantRole', '==', 'bus_incharge')
-        .get();
-
-      if (!existing.empty) {
-        skipped++;
-        continue;
-      }
-
-      await createInchargeApplication(route.id, route, route.inchargeId).catch(console.error);
-      created++;
-    }
-
-    res.json({ message: `Migration complete. Created: ${created}, Skipped (already existed): ${skipped}` });
-  } catch (error) {
-    console.error('Migration error:', error);
-    res.status(500).json({ error: 'Migration failed' });
-  }
-};
-
-module.exports = { getAllRoutes, getRoute, createRoute, updateRoute, deleteRoute, assignIncharge, migrateInchargeApplications };
+module.exports = { getAllRoutes, getRoute, createRoute, updateRoute, deleteRoute, assignIncharge };

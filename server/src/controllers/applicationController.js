@@ -28,8 +28,19 @@ const submitApplication = async (req, res) => {
       routeId, boardingPointId, paymentType, partialPermissionId, concessionPermissionId,
     } = req.body;
 
-    if (!name || !regNo || !collegeId || !routeId || !boardingPointId) {
+    const isIncharge = req.user.role === 'bus_incharge';
+    if (!name || !routeId || !boardingPointId || (!isIncharge && (!regNo || !collegeId))) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (isIncharge) {
+      const assignedSnap = await db.collection('busRoutes')
+        .where('inchargeId', '==', uid)
+        .limit(1)
+        .get();
+      if (assignedSnap.empty || assignedSnap.docs[0].id !== routeId) {
+        return res.status(403).json({ error: 'You can only apply for your assigned route' });
+      }
     }
 
     const [routeDoc, collegeDoc, bpDoc] = await Promise.all([
@@ -74,6 +85,11 @@ const submitApplication = async (req, res) => {
     let resolvedPermissionId = null;
     let resolvedConcessionId = null;
     let concessionReason = null;
+
+    if (isIncharge) {
+      fare = Math.round(fullFare * 0.5);
+      concessionReason = '50% staff concession for bus incharge';
+    }
 
     if (partialPermissionId) {
       const permDoc = await db.collection('partialPaymentPermissions').doc(partialPermissionId).get();
@@ -130,7 +146,7 @@ const submitApplication = async (req, res) => {
       routeName: route.routeName,
       boardingPointId,
       boardingPointName: bp.name,
-      paymentType: resolvedConcessionId ? 'concession' : resolvedPermissionId ? 'coordinator_partial' : (paymentType || 'full'),
+      paymentType: isIncharge ? 'incharge_concession' : resolvedConcessionId ? 'concession' : resolvedPermissionId ? 'coordinator_partial' : (paymentType || 'full'),
       fare,
       fullFare,
       dueAmount,

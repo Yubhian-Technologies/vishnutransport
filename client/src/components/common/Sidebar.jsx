@@ -44,6 +44,8 @@ const NAV_CONFIG = {
   ],
   bus_incharge: [
     { to: '/incharge', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/incharge/apply', icon: FileText, label: 'Apply for Bus' },
+    { to: '/incharge/status', icon: BookOpen, label: 'Application Status' },
     { to: '/incharge/students', icon: Users, label: 'Route Students' },
     { to: '/incharge/attendance', icon: ScanLine, label: 'Scan Attendance' },
   ],
