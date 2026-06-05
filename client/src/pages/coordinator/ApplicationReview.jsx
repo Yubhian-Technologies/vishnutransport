@@ -75,6 +75,7 @@ export default function ApplicationReview() {
 
   const apps = useMemo(() => {
     return allApps.filter(app => {
+      if (app.applicantRole === 'bus_incharge') return false;
       if (search && !app.name.toLowerCase().includes(search.toLowerCase()) && !app.regNo.toLowerCase().includes(search.toLowerCase())) return false;
       if (collegeFilter && app.college !== collegeFilter) return false;
       if (routeFilter && app.routeId !== routeFilter) return false;
