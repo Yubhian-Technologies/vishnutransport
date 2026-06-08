@@ -78,7 +78,15 @@ export default function RouteManagement() {
     setStopRows(route.stops?.length ? route.stops.map(s => ({ name: s.name || '', time: s.time || '' })) : [EMPTY_STOP()]);
     try {
       const bps = await boardingPointsAPI.getByRoute(route.id);
-      setEditBpRows(bps.map(bp => ({ ...bp, _new: false, _deleted: false })));
+      setEditBpRows(bps.map(bp => ({
+        ...bp,
+        fare: bp.fare ?? '',
+        partialFare: bp.partialFare ?? '',
+        timings: bp.timings ?? '',
+        location: bp.location ?? '',
+        _new: false,
+        _deleted: false,
+      })));
     } catch {
       setEditBpRows([]);
     }
@@ -427,65 +435,50 @@ export default function RouteManagement() {
               </button>
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {(editRoute ? editBpRows : bpRows).filter(bp => !bp._deleted).map((bp, visibleIdx) => {
-                const actualIdx = editRoute
-                  ? editBpRows.indexOf(bp)
-                  : visibleIdx;
-                return (
-                  <div key={editRoute ? (bp.id || `new-${visibleIdx}`) : visibleIdx} className="border rounded-lg p-3 bg-gray-50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-600">
-                        Stop {visibleIdx + 1}{bp._new ? <span className="ml-1 text-green-600">(new)</span> : ''}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => editRoute ? removeEditBpRow(actualIdx) : removeBpRow(visibleIdx)}
-                        className="p-1 text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="col-span-2">
-                        <input
-                          value={bp.name}
-                          onChange={e => editRoute ? updateEditBpRow(actualIdx, 'name', e.target.value) : updateBpRow(visibleIdx, 'name', e.target.value)}
-                          placeholder="Stop name *"
-                          className="input text-sm"
-                        />
+              {editRoute
+                ? editBpRows.map((bp, idx) => {
+                    if (bp._deleted) return null;
+                    const visibleNum = editBpRows.slice(0, idx + 1).filter(b => !b._deleted).length;
+                    return (
+                      <div key={bp.id || `new-${idx}`} className="border rounded-lg p-3 bg-gray-50 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-gray-600">
+                            Stop {visibleNum}{bp._new ? <span className="ml-1 text-green-600"> (new)</span> : ''}
+                          </span>
+                          <button type="button" onClick={() => removeEditBpRow(idx)} className="p-1 text-red-400 hover:text-red-600">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="col-span-2">
+                            <input value={bp.name} onChange={e => updateEditBpRow(idx, 'name', e.target.value)} placeholder="Stop name *" className="input text-sm" />
+                          </div>
+                          <input value={bp.timings} onChange={e => updateEditBpRow(idx, 'timings', e.target.value)} placeholder="Pickup time (e.g. 7:30 AM)" className="input text-sm" />
+                          <input value={bp.location} onChange={e => updateEditBpRow(idx, 'location', e.target.value)} placeholder="Landmark (optional)" className="input text-sm" />
+                          <input value={bp.fare} onChange={e => updateEditBpRow(idx, 'fare', e.target.value)} placeholder="Fare ₹ *" type="number" min={0} className="input text-sm" />
+                          <input value={bp.partialFare} onChange={e => updateEditBpRow(idx, 'partialFare', e.target.value)} placeholder="Partial fare ₹ (optional)" type="number" min={0} className="input text-sm" />
+                        </div>
                       </div>
-                      <input
-                        value={bp.timings}
-                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'timings', e.target.value) : updateBpRow(visibleIdx, 'timings', e.target.value)}
-                        placeholder="Pickup time (e.g. 7:30 AM)"
-                        className="input text-sm"
-                      />
-                      <input
-                        value={bp.location}
-                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'location', e.target.value) : updateBpRow(visibleIdx, 'location', e.target.value)}
-                        placeholder="Landmark (optional)"
-                        className="input text-sm"
-                      />
-                      <input
-                        value={bp.fare}
-                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'fare', e.target.value) : updateBpRow(visibleIdx, 'fare', e.target.value)}
-                        placeholder="Fare ₹ *"
-                        type="number"
-                        min={0}
-                        className="input text-sm"
-                      />
-                      <input
-                        value={bp.partialFare}
-                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'partialFare', e.target.value) : updateBpRow(visibleIdx, 'partialFare', e.target.value)}
-                        placeholder="Partial fare ₹ (optional)"
-                        type="number"
-                        min={0}
-                        className="input text-sm"
-                      />
+                    );
+                  })
+                : bpRows.map((bp, i) => (
+                    <div key={i} className="border rounded-lg p-3 bg-gray-50 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-600">Stop {i + 1}</span>
+                        <button type="button" onClick={() => removeBpRow(i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="col-span-2">
+                          <input value={bp.name} onChange={e => updateBpRow(i, 'name', e.target.value)} placeholder="Stop name *" className="input text-sm" />
+                        </div>
+                        <input value={bp.timings} onChange={e => updateBpRow(i, 'timings', e.target.value)} placeholder="Pickup time (e.g. 7:30 AM)" className="input text-sm" />
+                        <input value={bp.location} onChange={e => updateBpRow(i, 'location', e.target.value)} placeholder="Landmark (optional)" className="input text-sm" />
+                        <input value={bp.fare} onChange={e => updateBpRow(i, 'fare', e.target.value)} placeholder="Fare ₹ *" type="number" min={0} className="input text-sm" />
+                        <input value={bp.partialFare} onChange={e => updateBpRow(i, 'partialFare', e.target.value)} placeholder="Partial fare ₹ (optional)" type="number" min={0} className="input text-sm" />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ))
+              }
               {(editRoute ? editBpRows.filter(b => !b._deleted) : bpRows).length === 0 && (
                 <p className="text-xs text-gray-400 text-center py-3">No boarding points yet. Click "Add Stop" to begin.</p>
               )}
