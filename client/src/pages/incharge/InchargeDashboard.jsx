@@ -36,7 +36,9 @@ export default function InchargeDashboard() {
   return (
     <Layout title="Bus Incharge Dashboard">
       <div className="space-y-6">
-        {!myRoute ? (
+        {routeLoading ? (
+          <LoadingSpinner />
+        ) : !myRoute ? (
           <div className="card text-center py-12">
             <Bus size={48} className="text-gray-300 mx-auto mb-4" />
             <h3 className="text-gray-600">No Route Assigned</h3>
