@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, Clock } from 'lucide-react';
+import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, Clock, ArrowLeft, Mail } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,10 +19,14 @@ const FEATURES = [
 ];
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -41,6 +45,32 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!resetEmail.trim() || !/\S+@\S+\.\S+/.test(resetEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await resetPassword(resetEmail.trim());
+      setResetSent(true);
+    } catch (err) {
+      const msg = err.code === 'auth/user-not-found'
+        ? 'No account found with this email'
+        : err.message || 'Failed to send reset email';
+      toast.error(msg);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const backToLogin = () => {
+    setForgotMode(false);
+    setResetSent(false);
+    setResetEmail('');
   };
 
   return (
@@ -127,66 +157,137 @@ export default function Login() {
         </div>
 
         <div className="w-full max-w-sm">
-          <div className="mb-7">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your account to continue</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-7">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <label className="label">Email Address</label>
-                <input
-                  {...register('email')}
-                  type="email"
-                  placeholder="you@example.com"
-                  className={`input ${errors.email ? 'input-error' : ''}`}
-                  autoComplete="email"
-                />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-              </div>
-
-              <div>
-                <label className="label">Password</label>
-                <div className="relative">
-                  <input
-                    {...register('password')}
-                    type={showPwd ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd(p => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-              </div>
-
-              <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-2">
-                {loading ? 'Signing in...' : 'Sign In'}
+          {forgotMode ? (
+            <>
+              <button onClick={backToLogin} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors">
+                <ArrowLeft size={15} /> Back to Sign In
               </button>
-            </form>
 
-            <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
-              <Clock size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-blue-800 text-xs font-semibold">Registrations Opening Soon</p>
-                <p className="text-blue-600 text-xs mt-0.5">New student registrations will open shortly. Stay tuned!</p>
+              <div className="mb-7">
+                <h2 className="text-2xl font-bold text-gray-900">Reset Password</h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  {resetSent ? 'Check your inbox for the reset link.' : "Enter your email and we'll send a reset link."}
+                </p>
               </div>
-            </div>
 
-            <Link
-              to="/register"
-              className="mt-3 flex items-center justify-center w-full py-2.5 rounded-xl border-2 border-primary-600 text-primary-600 text-sm font-semibold hover:bg-primary-50 transition-colors"
-            >
-              Create an Account
-            </Link>
-          </div>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-7">
+                {resetSent ? (
+                  <div className="text-center space-y-4">
+                    <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                      <Mail size={24} className="text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Email sent!</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        We sent a password reset link to<br />
+                        <span className="font-medium text-gray-700">{resetEmail}</span>
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-400">Didn't receive it? Check your spam folder or try again.</p>
+                    <button
+                      onClick={() => setResetSent(false)}
+                      className="text-sm text-primary-600 hover:underline"
+                    >
+                      Resend email
+                    </button>
+                    <button onClick={backToLogin} className="btn-primary w-full py-2.5 mt-2">
+                      Back to Sign In
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div>
+                      <label className="label">Email Address</label>
+                      <input
+                        type="email"
+                        value={resetEmail}
+                        onChange={e => setResetEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="input"
+                        autoComplete="email"
+                        autoFocus
+                      />
+                    </div>
+                    <button type="submit" disabled={resetLoading} className="btn-primary w-full py-2.5">
+                      {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-7">
+                <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+                <p className="text-gray-500 text-sm mt-1">Sign in to your account to continue</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-7">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div>
+                    <label className="label">Email Address</label>
+                    <input
+                      {...register('email')}
+                      type="email"
+                      placeholder="you@example.com"
+                      className={`input ${errors.email ? 'input-error' : ''}`}
+                      autoComplete="email"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="label mb-0">Password</label>
+                      <button
+                        type="button"
+                        onClick={() => setForgotMode(true)}
+                        className="text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        {...register('password')}
+                        type={showPwd ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd(p => !p)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+                  </div>
+
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-2">
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </button>
+                </form>
+
+                <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
+                  <Clock size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-blue-800 text-xs font-semibold">Registrations Opening Soon</p>
+                    <p className="text-blue-600 text-xs mt-0.5">New student registrations will open shortly. Stay tuned!</p>
+                  </div>
+                </div>
+
+                <Link
+                  to="/register"
+                  className="mt-3 flex items-center justify-center w-full py-2.5 rounded-xl border-2 border-primary-600 text-primary-600 text-sm font-semibold hover:bg-primary-50 transition-colors"
+                >
+                  Create an Account
+                </Link>
+              </div>
+            </>
+          )}
 
           <p className="text-center text-[11px] text-gray-400 select-none mt-6">
             Developed by Yubhian Technologies LLP
