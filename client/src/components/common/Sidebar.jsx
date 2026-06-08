@@ -48,6 +48,7 @@ const NAV_CONFIG = {
     { to: '/incharge/status', icon: BookOpen, label: 'Application Status' },
     { to: '/incharge/students', icon: Users, label: 'Route Students' },
     { to: '/incharge/attendance', icon: ScanLine, label: 'Scan Attendance' },
+    { to: '/incharge/profile', icon: UserCircle, label: 'My Profile' },
   ],
   super_admin: [
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },

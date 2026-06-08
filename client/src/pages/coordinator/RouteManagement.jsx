@@ -22,6 +22,7 @@ export default function RouteManagement() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [expandedRoute, setExpandedRoute] = useState(null);
   const [bpRows, setBpRows] = useState([EMPTY_BP()]);
+  const [editBpRows, setEditBpRows] = useState([]);
   const [stopRows, setStopRows] = useState([EMPTY_STOP()]);
   const [saving, setSaving] = useState(false);
 
@@ -42,12 +43,6 @@ export default function RouteManagement() {
     queryClient.invalidateQueries({ queryKey: ['route-stats'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
   };
-
-  const updateRoute = useMutation({
-    mutationFn: ({ id, data }) => routesAPI.update(id, data),
-    onSuccess: () => { toast.success('Route updated'); setEditRoute(null); invalidateRouteRelated(); },
-    onError: e => toast.error(e.message),
-  });
 
   const deleteRoute = useMutation({
     mutationFn: routesAPI.delete,
@@ -77,18 +72,37 @@ export default function RouteManagement() {
     onError: e => toast.error(e.message),
   });
 
-  const openEdit = (route) => {
+  const openEdit = async (route) => {
     setEditRoute(route);
     Object.entries(route).forEach(([k, v]) => setValue(k, v));
     setStopRows(route.stops?.length ? route.stops.map(s => ({ name: s.name || '', time: s.time || '' })) : [EMPTY_STOP()]);
+    try {
+      const bps = await boardingPointsAPI.getByRoute(route.id);
+      setEditBpRows(bps.map(bp => ({ ...bp, _new: false, _deleted: false })));
+    } catch {
+      setEditBpRows([]);
+    }
   };
 
   const closeRouteModal = () => {
     setRouteModal(false);
     setEditRoute(null);
     setBpRows([EMPTY_BP()]);
+    setEditBpRows([]);
     setStopRows([EMPTY_STOP()]);
     reset();
+  };
+
+  const updateEditBpRow = (index, field, value) => {
+    setEditBpRows(rows => rows.map((r, i) => i === index ? { ...r, [field]: value } : r));
+  };
+
+  const removeEditBpRow = (index) => {
+    setEditBpRows(rows => {
+      const row = rows[index];
+      if (row._new) return rows.filter((_, i) => i !== index);
+      return rows.map((r, i) => i === index ? { ...r, _deleted: true } : r);
+    });
   };
 
   const updateBpRow = (index, field, value) => {
@@ -107,9 +121,45 @@ export default function RouteManagement() {
     setStopRows(rows => rows.length === 1 ? [EMPTY_STOP()] : rows.filter((_, i) => i !== index));
   };
 
-  const handleEditRoute = (formData) => {
+  const handleEditRoute = async (formData) => {
     const validStops = stopRows.filter(s => s.name.trim()).map(s => ({ name: s.name.trim(), time: s.time }));
-    updateRoute.mutate({ id: editRoute.id, data: { ...formData, stops: validStops } });
+    setSaving(true);
+    try {
+      await routesAPI.update(editRoute.id, { ...formData, stops: validStops });
+      await Promise.all(editBpRows.map(bp => {
+        if (bp._deleted && !bp._new) return boardingPointsAPI.delete(bp.id);
+        if (!bp._deleted && bp._new && bp.name?.trim()) {
+          return boardingPointsAPI.create({
+            routeId: editRoute.id,
+            name: bp.name.trim(),
+            timings: bp.timings || '',
+            location: bp.location || '',
+            fare: bp.fare !== '' && bp.fare != null ? Number(bp.fare) : undefined,
+            partialFare: bp.partialFare !== '' && bp.partialFare != null ? Number(bp.partialFare) : undefined,
+            order: bp.order !== '' && bp.order != null ? Number(bp.order) : undefined,
+          });
+        }
+        if (!bp._deleted && !bp._new) {
+          return boardingPointsAPI.update(bp.id, {
+            name: bp.name,
+            timings: bp.timings || '',
+            location: bp.location || '',
+            fare: bp.fare !== '' && bp.fare != null ? Number(bp.fare) : undefined,
+            partialFare: bp.partialFare !== '' && bp.partialFare != null ? Number(bp.partialFare) : undefined,
+            order: bp.order !== '' && bp.order != null ? Number(bp.order) : undefined,
+          });
+        }
+        return Promise.resolve();
+      }));
+      toast.success('Route updated');
+      closeRouteModal();
+      invalidateRouteRelated();
+      queryClient.invalidateQueries({ queryKey: ['boarding-points'] });
+    } catch (e) {
+      toast.error(e.message || 'Failed to update route');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCreateRoute = async (formData) => {
@@ -356,25 +406,42 @@ export default function RouteManagement() {
             )}
           </div>
 
-          {/* Inline boarding points — only for create */}
-          {!editRoute && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="label mb-0">Boarding Points *</label>
-                <button
-                  type="button"
-                  onClick={() => setBpRows(r => [...r, EMPTY_BP()])}
-                  className="btn-outline text-xs py-1"
-                >
-                  <Plus size={13} /> Add Stop
-                </button>
-              </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {bpRows.map((bp, i) => (
-                  <div key={i} className="border rounded-lg p-3 bg-gray-50 space-y-2">
+          {/* Boarding Points */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="label mb-0">
+                Boarding Points {!editRoute && '*'}
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editRoute) {
+                    setEditBpRows(r => [...r, { ...EMPTY_BP(), _new: true, _deleted: false }]);
+                  } else {
+                    setBpRows(r => [...r, EMPTY_BP()]);
+                  }
+                }}
+                className="btn-outline text-xs py-1"
+              >
+                <Plus size={13} /> Add Stop
+              </button>
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {(editRoute ? editBpRows : bpRows).filter(bp => !bp._deleted).map((bp, visibleIdx) => {
+                const actualIdx = editRoute
+                  ? editBpRows.indexOf(bp)
+                  : visibleIdx;
+                return (
+                  <div key={editRoute ? (bp.id || `new-${visibleIdx}`) : visibleIdx} className="border rounded-lg p-3 bg-gray-50 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-gray-600">Stop {i + 1}</span>
-                      <button type="button" onClick={() => removeBpRow(i)} className="p-1 text-red-400 hover:text-red-600">
+                      <span className="text-xs font-semibold text-gray-600">
+                        Stop {visibleIdx + 1}{bp._new ? <span className="ml-1 text-green-600">(new)</span> : ''}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => editRoute ? removeEditBpRow(actualIdx) : removeBpRow(visibleIdx)}
+                        className="p-1 text-red-400 hover:text-red-600"
+                      >
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -382,26 +449,26 @@ export default function RouteManagement() {
                       <div className="col-span-2">
                         <input
                           value={bp.name}
-                          onChange={e => updateBpRow(i, 'name', e.target.value)}
+                          onChange={e => editRoute ? updateEditBpRow(actualIdx, 'name', e.target.value) : updateBpRow(visibleIdx, 'name', e.target.value)}
                           placeholder="Stop name *"
                           className="input text-sm"
                         />
                       </div>
                       <input
                         value={bp.timings}
-                        onChange={e => updateBpRow(i, 'timings', e.target.value)}
+                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'timings', e.target.value) : updateBpRow(visibleIdx, 'timings', e.target.value)}
                         placeholder="Pickup time (e.g. 7:30 AM)"
                         className="input text-sm"
                       />
                       <input
                         value={bp.location}
-                        onChange={e => updateBpRow(i, 'location', e.target.value)}
+                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'location', e.target.value) : updateBpRow(visibleIdx, 'location', e.target.value)}
                         placeholder="Landmark (optional)"
                         className="input text-sm"
                       />
                       <input
                         value={bp.fare}
-                        onChange={e => updateBpRow(i, 'fare', e.target.value)}
+                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'fare', e.target.value) : updateBpRow(visibleIdx, 'fare', e.target.value)}
                         placeholder="Fare ₹ *"
                         type="number"
                         min={0}
@@ -409,7 +476,7 @@ export default function RouteManagement() {
                       />
                       <input
                         value={bp.partialFare}
-                        onChange={e => updateBpRow(i, 'partialFare', e.target.value)}
+                        onChange={e => editRoute ? updateEditBpRow(actualIdx, 'partialFare', e.target.value) : updateBpRow(visibleIdx, 'partialFare', e.target.value)}
                         placeholder="Partial fare ₹ (optional)"
                         type="number"
                         min={0}
@@ -417,14 +484,17 @@ export default function RouteManagement() {
                       />
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+              {(editRoute ? editBpRows.filter(b => !b._deleted) : bpRows).length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-3">No boarding points yet. Click "Add Stop" to begin.</p>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={closeRouteModal} className="btn-secondary flex-1">Cancel</button>
-            <button type="submit" disabled={saving || updateRoute.isPending} className="btn-primary flex-1">
+            <button type="submit" disabled={saving} className="btn-primary flex-1">
               {saving ? 'Saving…' : editRoute ? 'Update Route' : 'Create Route'}
             </button>
           </div>

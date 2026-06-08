@@ -29,6 +29,7 @@ import FinancialReports from './pages/accounts/FinancialReports';
 
 import InchargeDashboard from './pages/incharge/InchargeDashboard';
 import InchargeApplicationForm from './pages/incharge/InchargeApplicationForm';
+import InchargeProfilePage from './pages/incharge/InchargeProfilePage';
 import RouteStudents from './pages/incharge/RouteStudents';
 import AttendanceScanner from './pages/incharge/AttendanceScanner';
 
@@ -96,6 +97,7 @@ export default function App() {
       <Route path="/incharge/status" element={<ProtectedRoute roles={['bus_incharge', 'super_admin']}><ApplicationStatus /></ProtectedRoute>} />
       <Route path="/incharge/students" element={<ProtectedRoute roles={['bus_incharge', 'super_admin']}><RouteStudents /></ProtectedRoute>} />
       <Route path="/incharge/attendance" element={<ProtectedRoute roles={['bus_incharge', 'super_admin']}><AttendanceScanner /></ProtectedRoute>} />
+      <Route path="/incharge/profile" element={<ProtectedRoute roles={['bus_incharge', 'super_admin']}><InchargeProfilePage /></ProtectedRoute>} />
 
       {/* Super Admin */}
       <Route path="/admin" element={<ProtectedRoute roles={['super_admin']}><AdminDashboard /></ProtectedRoute>} />

@@ -96,6 +96,8 @@ const updateUser = async (req, res) => {
         return res.status(400).json({ error: 'Invalid role' });
       }
       updates.role = role;
+      // ensure disabled field exists so role-based queries work correctly
+      if (updates.disabled === undefined) updates.disabled = false;
       try {
         await auth.setCustomUserClaims(req.params.id, { role });
       } catch (authErr) {
@@ -173,7 +175,7 @@ const updateMyProfile = async (req, res) => {
     const {
       name, phone,
       nameAsPerSSC, gender, bloodGroup, academicYear, dateOfJoining, address,
-      regNo, parentName, parentPhone, studentPhone, emergencyContact,
+      regNo, employeeId, branch, parentName, parentPhone, studentPhone, emergencyContact,
     } = req.body;
 
     const updates = {
@@ -191,6 +193,8 @@ const updateMyProfile = async (req, res) => {
     if (dateOfJoining !== undefined) updates.dateOfJoining = dateOfJoining || '';
     if (address !== undefined) updates.address = address || '';
     if (regNo !== undefined) updates.regNo = regNo || '';
+    if (employeeId !== undefined) updates.employeeId = employeeId || '';
+    if (branch !== undefined) updates.branch = branch || '';
     if (parentName !== undefined) updates.parentName = parentName || '';
     if (parentPhone !== undefined) updates.parentPhone = parentPhone || '';
     if (studentPhone !== undefined) updates.studentPhone = studentPhone || '';
@@ -243,14 +247,16 @@ const getBusInchargeList = async (req, res) => {
   try {
     const snapshot = await db.collection('users')
       .where('role', '==', ROLES.BUS_INCHARGE)
-      .where('disabled', '==', false)
       .get();
-    const incharges = snapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name,
-      email: doc.data().email,
-      assignedRouteId: doc.data().assignedRouteId,
-    }));
+    // filter disabled in memory — users registered normally may not have the disabled field set
+    const incharges = snapshot.docs
+      .filter(doc => doc.data().disabled !== true)
+      .map(doc => ({
+        id: doc.id,
+        name: doc.data().name,
+        email: doc.data().email,
+        assignedRouteId: doc.data().assignedRouteId,
+      }));
     res.json(incharges);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch incharges' });
