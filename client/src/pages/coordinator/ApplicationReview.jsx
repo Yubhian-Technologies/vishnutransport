@@ -173,21 +173,21 @@ export default function ApplicationReview() {
           </div>
 
           <select
-            value={collegeFilter}
-            onChange={e => setCollegeFilter(e.target.value)}
-            className="input text-sm w-48"
-          >
-            <option value="">All Colleges</option>
-            {colleges.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-
-          <select
             value={routeFilter}
             onChange={e => setRouteFilter(e.target.value)}
             className="input text-sm w-48"
           >
             <option value="">All Routes</option>
             {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+
+          <select
+            value={collegeFilter}
+            onChange={e => setCollegeFilter(e.target.value)}
+            className="input text-sm w-48"
+          >
+            <option value="">All Colleges</option>
+            {colleges.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
 
           <select
