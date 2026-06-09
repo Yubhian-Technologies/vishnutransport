@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, Bus, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Upload, X, Bus, ChevronRight, ChevronLeft, QrCode, Building2 } from 'lucide-react';
 
 const schema = z.object({
   nameAsPerSSC: z.string().min(2, 'Full name required'),
@@ -351,9 +351,30 @@ export default function InchargeApplicationForm() {
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-700 pb-1 border-b border-gray-100">Payment Proof</h3>
                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 text-sm">
-                  <p className="font-semibold text-blue-800">Pay {formatCurrency(inchargeFare)} and upload proof below.</p>
+                  <p className="font-semibold text-blue-800 flex items-center gap-2">
+                    <Building2 size={15} /> Pay {formatCurrency(inchargeFare)} and upload proof below.
+                  </p>
                   <p className="text-blue-600 text-xs mt-1">Full fare: {formatCurrency(fullFare)} · 50% concession applied.</p>
+                  {selectedCollege?.bankDetails && (
+                    <div className="mt-3 pt-3 border-t border-blue-200 space-y-1">
+                      <p><strong>Bank:</strong> {selectedCollege.bankDetails.bankName}</p>
+                      <p><strong>A/C Name:</strong> {selectedCollege.bankDetails.accountName}</p>
+                      <p><strong>A/C No:</strong> {selectedCollege.bankDetails.accountNumber}</p>
+                      <p><strong>IFSC:</strong> {selectedCollege.bankDetails.ifscCode}</p>
+                      {selectedCollege.bankDetails.upiId && <p><strong>UPI:</strong> {selectedCollege.bankDetails.upiId}</p>}
+                    </div>
+                  )}
                 </div>
+
+                {selectedCollege?.qrCodeUrl && (
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-700 mb-2 flex items-center justify-center gap-2">
+                      <QrCode size={16} /> Scan QR Code to Pay
+                    </p>
+                    <img src={selectedCollege.qrCodeUrl} alt="Payment QR" className="w-48 h-48 object-contain mx-auto border rounded-lg" />
+                  </div>
+                )}
+
                 <div>
                   <label className="label">UTR / Transaction Number</label>
                   <input {...register('utrNumber')} placeholder="e.g. UTR123456789012" className="input" />
