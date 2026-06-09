@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { applicationsAPI, routesAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI, publicAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDate, formatCurrency, STATUS_LABELS } from '../../utils/helpers';
-import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle, Phone, UserCog, Truck, AlarmClock } from 'lucide-react';
+import { FileText, ArrowRight, Bus, MapPin, CheckCircle2, Clock, UserCircle, Phone, UserCog, Truck, AlarmClock, MapPinned, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const TRACK_STAGES = [
   { label: 'Submitted', dot: 'bg-amber-500', ring: 'ring-amber-300', text: 'text-amber-600' },
@@ -42,6 +43,14 @@ export default function StudentDashboard() {
     queryFn: () => routesAPI.get(latestApp.routeId),
     enabled: isApproved && !!latestApp?.routeId,
   });
+
+  const { data: publicConfig } = useQuery({
+    queryKey: ['public-config'],
+    queryFn: publicAPI.getConfig,
+    staleTime: 5 * 60 * 1000,
+    enabled: isApproved,
+  });
+  const hasLoconav = isApproved && (publicConfig?.loconavPlayStore || publicConfig?.loconavAppStore);
 
   return (
     <Layout title={role === 'faculty' ? 'Faculty Dashboard' : 'Student Dashboard'}>
@@ -258,6 +267,78 @@ export default function StudentDashboard() {
                         )}
                       </div>
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {hasLoconav && (
+              <div className="card border-indigo-200 bg-gradient-to-br from-indigo-50 to-white">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <MapPinned size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800 mb-0">Track Your Bus</h3>
+                    <p className="text-xs text-gray-500">Live GPS tracking via LocoNav app</p>
+                  </div>
+                </div>
+
+                {(publicConfig?.loconavEmail || publicConfig?.loconavPassword) && (
+                  <div className="bg-white border border-indigo-100 rounded-xl p-3 mb-4 space-y-2">
+                    <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">App Login Credentials</p>
+                    {publicConfig.loconavEmail && (
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-gray-400">Username / Email</p>
+                          <p className="text-sm font-mono font-medium text-gray-800">{publicConfig.loconavEmail}</p>
+                        </div>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(publicConfig.loconavEmail); toast.success('Email copied'); }}
+                          className="p-1.5 text-gray-400 hover:text-indigo-600 rounded"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
+                    )}
+                    {publicConfig.loconavPassword && (
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-gray-400">Password</p>
+                          <p className="text-sm font-mono font-medium text-gray-800">{publicConfig.loconavPassword}</p>
+                        </div>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(publicConfig.loconavPassword); toast.success('Password copied'); }}
+                          className="p-1.5 text-gray-400 hover:text-indigo-600 rounded"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  {publicConfig?.loconavPlayStore && (
+                    <a
+                      href={publicConfig.loconavPlayStore}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-800 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M3.18 23.76c.3.17.65.18.96.03L14.77 12 3.12.22c-.3-.16-.66-.15-.96.03C1.76.59 1.5 1.04 1.5 1.52v20.96c0 .48.26.93.68 1.28zM16.34 13.6l2.55-1.47-2.83-2.83-2.27 2.27 2.55 1.47zm-1.57.9L3.66 20.95l9.56-9.57 1.55.89zm1.57-5.2-1.55.89-1.55-.89L3.66 3.05 15.34 9.5l2.55 1.47-1.55.89z"/></svg>
+                      Google Play
+                    </a>
+                  )}
+                  {publicConfig?.loconavAppStore && (
+                    <a
+                      href={publicConfig.loconavAppStore}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-800 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                      App Store
+                    </a>
                   )}
                 </div>
               </div>

@@ -7,16 +7,28 @@ router.get('/config', async (req, res) => {
   try {
     const doc = await db.collection('config').doc('publicSettings').get();
     const data = doc.exists ? doc.data() : {};
-    res.json({ busSchedulePdfUrl: data.busSchedulePdfUrl || null });
+    res.json({
+      busSchedulePdfUrl: data.busSchedulePdfUrl || null,
+      loconavEmail: data.loconavEmail || null,
+      loconavPassword: data.loconavPassword || null,
+      loconavPlayStore: data.loconavPlayStore || null,
+      loconavAppStore: data.loconavAppStore || null,
+    });
   } catch {
-    res.json({ busSchedulePdfUrl: null });
+    res.json({ busSchedulePdfUrl: null, loconavEmail: null, loconavPassword: null, loconavPlayStore: null, loconavAppStore: null });
   }
 });
 
 router.patch('/config', verifyToken, requireCoordinator, async (req, res) => {
-  const { busSchedulePdfUrl } = req.body;
+  const { busSchedulePdfUrl, loconavEmail, loconavPassword, loconavPlayStore, loconavAppStore } = req.body;
   await db.collection('config').doc('publicSettings').set(
-    { busSchedulePdfUrl: busSchedulePdfUrl || null },
+    {
+      busSchedulePdfUrl: busSchedulePdfUrl ?? null,
+      loconavEmail: loconavEmail ?? null,
+      loconavPassword: loconavPassword ?? null,
+      loconavPlayStore: loconavPlayStore ?? null,
+      loconavAppStore: loconavAppStore ?? null,
+    },
     { merge: true }
   );
   res.json({ message: 'Updated' });

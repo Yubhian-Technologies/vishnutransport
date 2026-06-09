@@ -23,13 +23,28 @@ export default function SystemConfig() {
     staleTime: 60 * 1000,
   });
   const [pdfUrlDraft, setPdfUrlDraft] = useState('');
+  const [loconavDraft, setLoconavDraft] = useState({ email: '', password: '', playStore: '', appStore: '' });
+
   React.useEffect(() => {
-    if (publicConfig?.busSchedulePdfUrl != null) setPdfUrlDraft(publicConfig.busSchedulePdfUrl || '');
+    if (!publicConfig) return;
+    if (publicConfig.busSchedulePdfUrl != null) setPdfUrlDraft(publicConfig.busSchedulePdfUrl || '');
+    setLoconavDraft({
+      email: publicConfig.loconavEmail || '',
+      password: publicConfig.loconavPassword || '',
+      playStore: publicConfig.loconavPlayStore || '',
+      appStore: publicConfig.loconavAppStore || '',
+    });
   }, [publicConfig]);
 
   const pdfUrlMutation = useMutation({
     mutationFn: (url) => adminConfigAPI.updatePublicConfig({ busSchedulePdfUrl: url }),
     onSuccess: () => { queryClient.invalidateQueries(['public-config']); toast.success('Bus schedule PDF URL updated'); },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const loconavMutation = useMutation({
+    mutationFn: (d) => adminConfigAPI.updatePublicConfig({ loconavEmail: d.email, loconavPassword: d.password, loconavPlayStore: d.playStore, loconavAppStore: d.appStore }),
+    onSuccess: () => { queryClient.invalidateQueries(['public-config']); toast.success('LocoNav settings updated'); },
     onError: (err) => toast.error(err.message),
   });
 
@@ -188,16 +203,46 @@ export default function SystemConfig() {
                   {pdfUrlMutation.isPending ? 'Saving...' : 'Save URL'}
                 </button>
                 {publicConfig?.busSchedulePdfUrl && (
-                  <a
-                    href={publicConfig.busSchedulePdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary-600 hover:underline"
-                  >
+                  <a href={publicConfig.busSchedulePdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary-600 hover:underline">
                     Preview PDF →
                   </a>
                 )}
               </div>
+            </div>
+
+            <hr className="border-gray-100 my-2" />
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText size={15} className="text-indigo-600" />
+                <p className="font-semibold text-gray-700 text-sm">LocoNav Bus Tracker</p>
+              </div>
+              <p className="text-xs text-gray-400">Shared LocoNav login credentials shown to students with approved applications. Leave blank to hide the tracker card.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Username / Email</label>
+                  <input type="text" value={loconavDraft.email} onChange={e => setLoconavDraft(p => ({ ...p, email: e.target.value }))} className="input" placeholder="vit123@gmail.com" />
+                </div>
+                <div>
+                  <label className="label">Password</label>
+                  <input type="text" value={loconavDraft.password} onChange={e => setLoconavDraft(p => ({ ...p, password: e.target.value }))} className="input" placeholder="123456" />
+                </div>
+                <div>
+                  <label className="label">Google Play URL</label>
+                  <input type="url" value={loconavDraft.playStore} onChange={e => setLoconavDraft(p => ({ ...p, playStore: e.target.value }))} className="input" placeholder="https://play.google.com/..." />
+                </div>
+                <div>
+                  <label className="label">App Store URL</label>
+                  <input type="url" value={loconavDraft.appStore} onChange={e => setLoconavDraft(p => ({ ...p, appStore: e.target.value }))} className="input" placeholder="https://apps.apple.com/..." />
+                </div>
+              </div>
+              <button
+                onClick={() => loconavMutation.mutate(loconavDraft)}
+                disabled={loconavMutation.isPending}
+                className="btn-primary text-sm"
+              >
+                {loconavMutation.isPending ? 'Saving...' : 'Save LocoNav Settings'}
+              </button>
             </div>
           </div>
         )}
