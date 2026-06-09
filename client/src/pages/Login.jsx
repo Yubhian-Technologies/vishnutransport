@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, Clock, ArrowLeft, Mail } from 'lucide-react';
+import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, ArrowLeft, Mail } from 'lucide-react';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -98,11 +98,6 @@ export default function Login() {
               <p className="font-bold text-lg leading-tight">Vishnu Transportation</p>
               <p className="text-blue-300 text-xs tracking-wide">College Bus Management</p>
             </div>
-          </div>
-
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 mb-6">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
-            <span className="text-xs font-medium text-white/90 tracking-wide">Registrations Opening Soon</span>
           </div>
 
           <h2 className="text-4xl font-extrabold leading-tight mb-4">
@@ -270,14 +265,6 @@ export default function Login() {
                     {loading ? 'Signing in...' : 'Sign In'}
                   </button>
                 </form>
-
-                <div className="mt-5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
-                  <Clock size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-blue-800 text-xs font-semibold">Registrations Opening Soon</p>
-                    <p className="text-blue-600 text-xs mt-0.5">New student registrations will open shortly. Stay tuned!</p>
-                  </div>
-                </div>
 
                 <Link
                   to="/register"
