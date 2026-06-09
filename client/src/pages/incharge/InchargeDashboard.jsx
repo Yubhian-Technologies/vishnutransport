@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import StatusBadge from '../../components/common/StatusBadge';
-import { applicationsAPI, routesAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI, usersAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../utils/helpers';
 import { Users, MapPin, Bus, ArrowRight, FileText } from 'lucide-react';
@@ -32,6 +32,14 @@ export default function InchargeDashboard() {
   const myApp = myApps.find(a => a.status !== 'rejected_l1' && a.status !== 'rejected_l2');
 
   const myStudents = (appsData?.data || []).filter(a => a.routeId === myRoute?.id && a.applicantRole !== 'bus_incharge');
+
+  const previewStudentIds = myStudents.slice(0, 5).map(s => s.studentId).filter(Boolean);
+  const { data: dashPhotos = {} } = useQuery({
+    queryKey: ['dash-student-photos', previewStudentIds.join(',')],
+    queryFn: () => usersAPI.getPhotos(previewStudentIds),
+    enabled: previewStudentIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <Layout title="Bus Incharge Dashboard">
@@ -116,14 +124,22 @@ export default function InchargeDashboard() {
               </div>
               {isLoading ? <LoadingSpinner size="sm" /> : (
                 <div className="space-y-2">
-                  {myStudents.slice(0, 5).map(student => (
-                    <div key={student.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <div>
-                        <p className="font-medium text-sm">{student.name}</p>
-                        <p className="text-xs text-gray-400">{student.regNo} · {student.boardingPointName}</p>
+                  {myStudents.slice(0, 5).map(student => {
+                    const photo = dashPhotos[student.studentId];
+                    const initials = (student.name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    return (
+                      <div key={student.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                        {photo
+                          ? <img src={photo} alt={student.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-200" />
+                          : <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs flex-shrink-0">{initials}</div>
+                        }
+                        <div>
+                          <p className="font-medium text-sm">{student.name}</p>
+                          <p className="text-xs text-gray-400">{student.regNo} · {student.boardingPointName}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {myStudents.length > 5 && (
                     <p className="text-xs text-gray-400 text-center pt-2">+{myStudents.length - 5} more students</p>
                   )}

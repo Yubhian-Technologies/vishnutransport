@@ -4,10 +4,23 @@ import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import StatusBadge from '../../components/common/StatusBadge';
 import Modal from '../../components/common/Modal';
-import { applicationsAPI, routesAPI } from '../../utils/api';
+import { applicationsAPI, routesAPI, usersAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, exportToCSV } from '../../utils/helpers';
 import { Search, Download, MapPin, ChevronDown } from 'lucide-react';
+
+function Avatar({ name, photoURL, size = 'sm' }) {
+  const dim = size === 'lg' ? 'w-20 h-20 text-2xl' : size === 'md' ? 'w-12 h-12 text-base' : 'w-9 h-9 text-xs';
+  const initials = (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  if (photoURL) {
+    return <img src={photoURL} alt={name} className={`${dim} rounded-full object-cover flex-shrink-0 border border-gray-200`} />;
+  }
+  return (
+    <div className={`${dim} rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold flex-shrink-0`}>
+      {initials}
+    </div>
+  );
+}
 
 export default function RouteStudents() {
   const { userProfile } = useAuth();
@@ -32,6 +45,14 @@ export default function RouteStudents() {
   const allStudents = (appsData?.data || []).filter(a => a.routeId === myRoute?.id);
   const boardingPoints = [...new Set(allStudents.map(s => s.boardingPointName))];
   const colleges = [...new Set(allStudents.map(s => s.college).filter(Boolean))];
+
+  const studentIds = allStudents.map(s => s.studentId).filter(Boolean);
+  const { data: photos = {} } = useQuery({
+    queryKey: ['student-photos', studentIds.join(',')],
+    queryFn: () => usersAPI.getPhotos(studentIds),
+    enabled: studentIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const filtered = allStudents.filter(s => {
     const matchesSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.regNo?.toLowerCase().includes(search.toLowerCase());
@@ -105,8 +126,13 @@ export default function RouteStudents() {
                   <tr key={student.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedStudent(student)}>
                     <td className="text-sm text-gray-500 font-medium text-center">{idx + 1}</td>
                     <td>
-                      <p className="font-medium text-primary-700 hover:underline">{student.name}</p>
-                      <p className="text-xs text-gray-400">{student.regNo}</p>
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={student.name} photoURL={photos[student.studentId]} />
+                        <div>
+                          <p className="font-medium text-primary-700 hover:underline">{student.name}</p>
+                          <p className="text-xs text-gray-400">{student.regNo}</p>
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <div className="flex items-center gap-1 text-sm">
@@ -127,10 +153,19 @@ export default function RouteStudents() {
       <Modal isOpen={!!selectedStudent} onClose={() => setSelectedStudent(null)} title="Student Details" size="lg">
         {selectedStudent && (
           <div className="space-y-4 text-sm">
+            {/* Profile header */}
+            <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
+              <Avatar name={selectedStudent.name} photoURL={photos[selectedStudent.studentId]} size="lg" />
+              <div>
+                <p className="font-semibold text-gray-900 text-base">{selectedStudent.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{selectedStudent.regNo}</p>
+                <p className="text-xs text-gray-400">{selectedStudent.college || '—'}</p>
+              </div>
+            </div>
+
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Personal Details</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                ['Name', selectedStudent.name],
                 ['Name as per SSC', selectedStudent.nameAsPerSSC || '—'],
                 ['Type', selectedStudent.applicantRole === 'faculty' ? 'Faculty' : 'Student'],
                 ['Gender', selectedStudent.gender ? selectedStudent.gender.charAt(0).toUpperCase() + selectedStudent.gender.slice(1) : '—'],

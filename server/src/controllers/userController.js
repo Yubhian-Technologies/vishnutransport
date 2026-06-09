@@ -212,6 +212,22 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+const getPhotos = async (req, res) => {
+  try {
+    const uids = (req.query.uids || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 100);
+    if (!uids.length) return res.json({});
+    const refs = uids.map(id => db.collection('users').doc(id));
+    const docs = await db.getAll(...refs);
+    const photos = {};
+    docs.forEach((doc, i) => {
+      photos[uids[i]] = doc.exists ? (doc.data().photoURL || null) : null;
+    });
+    res.json(photos);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch photos' });
+  }
+};
+
 const getGuestUsers = async (req, res) => {
   try {
     const snapshot = await db.collection('users').where('role', '==', ROLES.GUEST).get();
@@ -263,4 +279,4 @@ const getBusInchargeList = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, getUser, createUser, updateUser, deleteUser, getBusInchargeList, updateMyProfile, uploadProfilePhoto, getGuestUsers, deleteGuestUser };
+module.exports = { getAllUsers, getUser, createUser, updateUser, deleteUser, getBusInchargeList, updateMyProfile, uploadProfilePhoto, getGuestUsers, deleteGuestUser, getPhotos };

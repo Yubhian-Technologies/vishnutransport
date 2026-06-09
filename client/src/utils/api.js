@@ -100,6 +100,7 @@ export const usersAPI = {
   getIncharges: () => api.get('/users/incharges'),
   getGuests: () => api.get('/users/guests'),
   deleteGuest: (id) => api.delete(`/users/guests/${id}`),
+  getPhotos: (uids) => api.get(`/users/photos?uids=${uids.join(',')}`),
 };
 
 export const analyticsAPI = {

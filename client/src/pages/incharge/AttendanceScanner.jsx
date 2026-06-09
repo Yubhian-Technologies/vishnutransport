@@ -3,12 +3,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import jsQR from 'jsqr';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { attendanceAPI, applicationsAPI } from '../../utils/api';
+import { attendanceAPI, applicationsAPI, usersAPI } from '../../utils/api';
 import { format } from 'date-fns';
 import {
   ScanLine, CheckCircle2, XCircle, CameraOff, Calendar,
   Sun, Sunset, Users, Search, MapPin,
 } from 'lucide-react';
+
+function Avatar({ name, photoURL }) {
+  const initials = (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  if (photoURL) {
+    return <img src={photoURL} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-200" />;
+  }
+  return (
+    <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+      {initials}
+    </div>
+  );
+}
 import toast from 'react-hot-toast';
 
 /* ── Beep ─────────────────────────────────────────────── */
@@ -141,12 +153,25 @@ export default function AttendanceScanner() {
     enabled: activeTab === 'manual',
   });
 
+  const confirmedStudentsForPhotos = studentsData?.data || [];
+  const allUidsForPhotos = [...new Set([
+    ...confirmedStudentsForPhotos.map(s => s.studentId),
+    ...(routeData?.records || []).map(r => r.studentId),
+  ])].filter(Boolean);
+
+  const { data: photos = {} } = useQuery({
+    queryKey: ['attendance-photos', allUidsForPhotos.join(',')],
+    queryFn: () => usersAPI.getPhotos(allUidsForPhotos),
+    enabled: allUidsForPhotos.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
   /* ── Derived data ── */
   const records = routeData?.records || [];
   const morningRecords = records.filter(r => r.period === 'morning');
   const eveningRecords = records.filter(r => r.period === 'evening');
 
-  const confirmedStudents = studentsData?.data || [];
+  const confirmedStudents = confirmedStudentsForPhotos;
   const boardingPoints = [...new Set(confirmedStudents.map(s => s.boardingPointName).filter(Boolean))].sort();
 
   const filteredStudents = confirmedStudents.filter(s => {
@@ -376,6 +401,7 @@ export default function AttendanceScanner() {
                           : 'bg-white border-gray-200 hover:border-primary-300 hover:bg-primary-50'
                       }`}
                     >
+                      <Avatar name={student.name} photoURL={photos[student.studentId]} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 truncate">{student.name}</p>
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
@@ -437,12 +463,13 @@ export default function AttendanceScanner() {
                     {period === 'morning' ? 'Morning' : 'Evening'} — {pr.length} present
                   </p>
                   {pr.map(r => (
-                    <div key={r.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
-                      <div>
-                        <p className="text-sm font-medium">{r.studentName}</p>
+                    <div key={r.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
+                      <Avatar name={r.studentName} photoURL={photos[r.studentId]} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{r.studentName}</p>
                         <p className="text-xs text-gray-400">{r.regNo} · {r.boardingPointName}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <p className="text-xs text-gray-500">{format(new Date(r.timestamp), 'hh:mm a')}</p>
                         {r.markedManually && (
                           <p className="text-xs text-blue-400">Manual</p>

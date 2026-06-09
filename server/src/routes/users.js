@@ -4,12 +4,13 @@ const { requireSuperAdmin, requireCoordinator } = require('../middleware/roleAut
 const { upload } = require('../middleware/upload');
 const {
   getAllUsers, getUser, createUser, updateUser, deleteUser, getBusInchargeList,
-  updateMyProfile, uploadProfilePhoto, getGuestUsers, deleteGuestUser,
+  updateMyProfile, uploadProfilePhoto, getGuestUsers, deleteGuestUser, getPhotos,
 } = require('../controllers/userController');
 
 router.get('/', verifyToken, requireSuperAdmin, getAllUsers);
 router.get('/incharges', verifyToken, requireCoordinator, getBusInchargeList);
 router.get('/guests', verifyToken, requireCoordinator, getGuestUsers);
+router.get('/photos', verifyToken, getPhotos);
 router.put('/me', verifyToken, updateMyProfile);
 router.post('/me/photo', verifyToken, upload.single('photo'), uploadProfilePhoto);
 router.get('/:id', verifyToken, requireSuperAdmin, getUser);
