@@ -206,7 +206,7 @@ export default function ProfilePage() {
                   <div className="select-wrapper">
                     <select value={form.academicYear} onChange={set('academicYear')} disabled={isLocked} className={`select ${isLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}>
                       <option value="">Select Year</option>
-                      {['1', '2', '3', '4', '5'].map(y => (
+                      {['2', '3', '4', '5'].map(y => (
                         <option key={y} value={y}>Year {y}</option>
                       ))}
                     </select>
