@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, ArrowLeft, Mail } from 'lucide-react';
+import { Bus, Eye, EyeOff, Shield, UserCheck, Sparkles, ArrowLeft, Mail, FileText } from 'lucide-react';
+import { publicAPI } from '../utils/api';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -27,6 +28,13 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
+  useEffect(() => {
+    publicAPI.getConfig().then(data => {
+      if (data?.busSchedulePdfUrl) setPdfUrl(data.busSchedulePdfUrl);
+    }).catch(() => {});
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -272,6 +280,18 @@ export default function Login() {
                 >
                   Create an Account
                 </Link>
+
+                {pdfUrl && (
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    <FileText size={15} />
+                    Bus Schedule &amp; Timings
+                  </a>
+                )}
               </div>
             </>
           )}

@@ -136,3 +136,11 @@ export const paymentsAPI = {
   getAll: (params) => api.get('/payments', { params }),
   getSummary: () => api.get('/payments/summary'),
 };
+
+export const publicAPI = {
+  getConfig: () => api.get('/public/config'),
+};
+
+export const adminConfigAPI = {
+  updatePublicConfig: (data) => api.patch('/public/config', data),
+};

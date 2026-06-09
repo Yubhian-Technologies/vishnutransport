@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { collegesAPI, routesAPI } from '../../utils/api';
+import { collegesAPI, routesAPI, publicAPI, adminConfigAPI } from '../../utils/api';
 import { formatCurrency } from '../../utils/helpers';
 import toast from 'react-hot-toast';
-import { Settings, Building2, Route, RefreshCw, Database, Shield } from 'lucide-react';
+import { Settings, Building2, Route, RefreshCw, Database, Shield, FileText } from 'lucide-react';
 
 export default function SystemConfig() {
   const queryClient = useQueryClient();
@@ -17,11 +17,28 @@ export default function SystemConfig() {
     queryFn: () => routesAPI.getAll({ includeOccupancy: 'true' }),
   });
 
+  const { data: publicConfig } = useQuery({
+    queryKey: ['public-config'],
+    queryFn: publicAPI.getConfig,
+    staleTime: 60 * 1000,
+  });
+  const [pdfUrlDraft, setPdfUrlDraft] = useState('');
+  React.useEffect(() => {
+    if (publicConfig?.busSchedulePdfUrl != null) setPdfUrlDraft(publicConfig.busSchedulePdfUrl || '');
+  }, [publicConfig]);
+
+  const pdfUrlMutation = useMutation({
+    mutationFn: (url) => adminConfigAPI.updatePublicConfig({ busSchedulePdfUrl: url }),
+    onSuccess: () => { queryClient.invalidateQueries(['public-config']); toast.success('Bus schedule PDF URL updated'); },
+    onError: (err) => toast.error(err.message),
+  });
+
   const TABS = [
     { id: 'overview', label: 'System Overview', icon: Database },
     { id: 'colleges', label: 'Colleges', icon: Building2 },
     { id: 'routes', label: 'Routes', icon: Route },
     { id: 'security', label: 'Access Control', icon: Shield },
+    { id: 'public', label: 'Public Settings', icon: FileText },
   ];
 
   return (
@@ -140,6 +157,47 @@ export default function SystemConfig() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'public' && (
+          <div className="card">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText size={18} className="text-primary-600" />
+              <h2 className="mb-0">Public Settings</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">These settings are visible on the login page before users sign in.</p>
+
+            <div className="space-y-3">
+              <label className="label">Bus Schedule PDF URL</label>
+              <p className="text-xs text-gray-400 -mt-1">Paste a Cloudinary or any public URL to the bus schedule PDF. Leave blank to hide the button on the login page.</p>
+              <input
+                type="url"
+                value={pdfUrlDraft}
+                onChange={e => setPdfUrlDraft(e.target.value)}
+                placeholder="https://res.cloudinary.com/.../bus-schedule.pdf"
+                className="input"
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => pdfUrlMutation.mutate(pdfUrlDraft.trim())}
+                  disabled={pdfUrlMutation.isPending}
+                  className="btn-primary text-sm"
+                >
+                  {pdfUrlMutation.isPending ? 'Saving...' : 'Save URL'}
+                </button>
+                {publicConfig?.busSchedulePdfUrl && (
+                  <a
+                    href={publicConfig.busSchedulePdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary-600 hover:underline"
+                  >
+                    Preview PDF →
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         )}
