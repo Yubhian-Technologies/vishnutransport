@@ -80,6 +80,7 @@ export const applicationsAPI = {
     });
   },
   dueReview: (id, data) => api.patch(`/applications/${id}/due-review`, data),
+  purge: (id) => api.delete(`/applications/${id}`),
 };
 
 export const profileAPI = {

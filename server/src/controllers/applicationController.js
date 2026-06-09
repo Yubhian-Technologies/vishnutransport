@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { auth, db } = require('../config/firebase');
 const { uploadToCloud, deleteFromCloud } = require('../middleware/upload');
 
 const APPLICATION_STATUS = {
@@ -482,6 +482,35 @@ const accountsDueReview = async (req, res) => {
   }
 };
 
+const purgeApplication = async (req, res) => {
+  try {
+    const doc = await db.collection('applications').doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: 'Application not found' });
+
+    const app = doc.data();
+    const studentId = app.studentId;
+
+    // Delete uploaded files from Cloudinary
+    if (app.paymentProofPublicId) await deleteFromCloud(app.paymentProofPublicId).catch(() => {});
+    if (app.duePaymentPublicId) await deleteFromCloud(app.duePaymentPublicId).catch(() => {});
+
+    // Delete application document
+    await db.collection('applications').doc(req.params.id).delete();
+
+    if (studentId) {
+      // Delete Firestore user document
+      await db.collection('users').doc(studentId).delete().catch(() => {});
+      // Delete Firebase Auth user so they can re-register fresh
+      await auth.deleteUser(studentId).catch(() => {});
+    }
+
+    res.json({ message: 'Application and user account deleted successfully' });
+  } catch (error) {
+    console.error('Purge application error:', error);
+    res.status(500).json({ error: 'Failed to delete application' });
+  }
+};
+
 module.exports = {
   submitApplication,
   getMyApplication,
@@ -492,5 +521,6 @@ module.exports = {
   uploadPaymentProof,
   submitDuePayment,
   accountsDueReview,
+  purgeApplication,
   APPLICATION_STATUS,
 };

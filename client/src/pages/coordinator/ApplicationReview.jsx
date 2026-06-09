@@ -8,7 +8,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { applicationsAPI, routesAPI } from '../../utils/api';
 import { formatCurrency, formatDateTime, exportToCSV } from '../../utils/helpers';
 import toast from 'react-hot-toast';
-import { CheckCircle2, XCircle, Eye, Download, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Download, Search, Trash2 } from 'lucide-react';
 
 const STATUS_TABS = [
   { label: 'Pending', value: 'pending_coordinator' },
@@ -37,6 +37,7 @@ export default function ApplicationReview() {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectTargetId, setRejectTargetId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -113,6 +114,17 @@ export default function ApplicationReview() {
       invalidateAfterReview();
     },
     onError: (err) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => applicationsAPI.purge(id),
+    onSuccess: () => {
+      toast.success('Application and user account deleted');
+      setDeleteTarget(null);
+      if (selectedApp) setSelectedApp(null);
+      invalidateAfterReview();
+    },
+    onError: (err) => toast.error(err.message || 'Failed to delete'),
   });
 
   const handleExport = () => {
@@ -303,6 +315,13 @@ export default function ApplicationReview() {
                             </button>
                           </>
                         )}
+                        <button
+                          onClick={() => setDeleteTarget(app)}
+                          className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
+                          title="Delete application & user"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -448,6 +467,40 @@ export default function ApplicationReview() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Delete confirmation */}
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Application" size="sm">
+        {deleteTarget && (
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-red-800 mb-1">This action is permanent and cannot be undone.</p>
+              <p className="text-sm text-red-700">The following will be deleted:</p>
+              <ul className="mt-2 space-y-1 text-sm text-red-600 list-disc list-inside">
+                <li>Application record</li>
+                <li>User profile & all data</li>
+                <li>Login account (Firebase Auth)</li>
+              </ul>
+              <p className="text-sm text-red-700 mt-2">
+                The user can <span className="font-semibold">re-register</span> with the same email after deletion.
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <p className="font-medium text-gray-900">{deleteTarget.name}</p>
+              <p className="text-gray-500 text-xs mt-0.5">{deleteTarget.regNo} · {deleteTarget.college}</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="btn-secondary flex-1">Cancel</button>
+              <button
+                onClick={() => deleteMutation.mutate(deleteTarget.id)}
+                disabled={deleteMutation.isPending}
+                className="btn-danger flex-1 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </Layout>
   );
