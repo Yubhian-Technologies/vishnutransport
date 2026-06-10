@@ -64,9 +64,10 @@ export const applicationsAPI = {
   get: (id) => api.get(`/applications/${id}`),
   coordinatorReview: (id, data) => api.patch(`/applications/${id}/coordinator-review`, data),
   accountsReview: (id, data) => api.patch(`/applications/${id}/accounts-review`, data),
-  uploadProof: (id, file) => {
+  uploadProof: (id, file, utrNumber) => {
     const form = new FormData();
     form.append('paymentProof', file);
+    if (utrNumber) form.append('utrNumber', utrNumber);
     return api.post(`/applications/${id}/payment-proof`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

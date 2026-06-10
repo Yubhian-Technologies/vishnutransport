@@ -25,6 +25,66 @@ const DUE_STATUS_CONFIG = {
   rejected: { label: 'Due Payment Rejected', color: 'red', icon: XCircle },
 };
 
+function ProofUploader({ appId, currentUtr }) {
+  const [file, setFile] = useState(null);
+  const [utr, setUtr] = useState(currentUtr || '');
+  const queryClient = useQueryClient();
+
+  const onDrop = useCallback((accepted) => { if (accepted[0]) setFile(accepted[0]); }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop, accept: { 'image/*': [], 'application/pdf': [] }, maxSize: 5242880, maxFiles: 1,
+  });
+
+  const mutation = useMutation({
+    mutationFn: () => applicationsAPI.uploadProof(appId, file, utr),
+    onSuccess: () => {
+      toast.success('Payment proof updated');
+      setFile(null);
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="text-xs font-medium text-gray-700 mb-1 block">Transaction / UTR Number *</label>
+        <input
+          value={utr}
+          onChange={e => setUtr(e.target.value)}
+          placeholder="e.g. UTR123456789012"
+          className="input text-sm"
+        />
+      </div>
+      <div
+        {...getRootProps()}
+        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
+      >
+        <input {...getInputProps()} />
+        {file ? (
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm text-gray-700 truncate max-w-xs">{file.name}</span>
+            <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); }} className="text-red-500"><X size={15} /></button>
+          </div>
+        ) : (
+          <>
+            <Upload size={22} className="mx-auto text-gray-400 mb-1" />
+            <p className="text-sm text-gray-600">Drop payment screenshot here or click to browse</p>
+            <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG, PDF up to 5MB</p>
+          </>
+        )}
+      </div>
+      <button
+        onClick={() => mutation.mutate()}
+        disabled={!file || !utr.trim() || mutation.isPending}
+        className="btn-primary w-full"
+      >
+        {mutation.isPending ? 'Updating…' : 'Update Payment Proof'}
+      </button>
+    </div>
+  );
+}
+
 function DuePaymentUploader({ appId }) {
   const [file, setFile] = useState(null);
   const [utrNumber, setUtrNumber] = useState('');
@@ -178,11 +238,25 @@ export default function ApplicationStatus() {
           )}
 
           {app.paymentProofUrl && (
-            <div className="mt-2">
-              <p className="text-sm font-medium text-gray-700 mb-2">Initial Payment Proof</p>
+            <div className="mt-2 mb-1">
+              <p className="text-xs text-gray-500 mb-1">Payment Proof</p>
               <a href={app.paymentProofUrl} target="_blank" rel="noopener noreferrer" className="btn-outline text-xs inline-flex">
                 View Uploaded Proof
               </a>
+            </div>
+          )}
+
+          {app.status === 'pending_coordinator' && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                {app.paymentProofUrl ? 'Update Payment Proof / UTR' : 'Upload Payment Proof'}
+              </p>
+              <p className="text-xs text-gray-400 mb-3">
+                {app.utrNumber
+                  ? `Current UTR: ${app.utrNumber} — upload a new proof to update it.`
+                  : 'Your UTR number was not saved. Please re-upload your payment proof with the correct UTR.'}
+              </p>
+              <ProofUploader appId={app.id} currentUtr={app.utrNumber || ''} />
             </div>
           )}
         </div>
