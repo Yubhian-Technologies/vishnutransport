@@ -32,6 +32,7 @@ const schema = z.object({
   routeId: z.string().min(1, 'Route required'),
   boardingPointId: z.string().min(1, 'Boarding point required'),
   paymentType: z.enum(['full', 'partial', 'coordinator_partial', 'concession']),
+  utrNumber: z.string().min(1, 'Transaction / UTR number is required'),
 });
 
 const STEPS = ['Personal Details', 'Select Route', 'Payment', 'Review & Submit'];
@@ -64,6 +65,7 @@ export default function ApplicationForm() {
     routeId: '',
     boardingPointId: '',
     paymentType: 'full',
+    utrNumber: '',
   };
 
   const { register, handleSubmit, watch, control, formState: { errors }, getValues, reset, trigger, clearErrors } = useForm({
@@ -530,7 +532,7 @@ export default function ApplicationForm() {
                 <div>
                   <label className="label">Transaction / UTR Number *</label>
                   <input
-                    {...register('utrNumber', { required: 'Transaction / UTR number is required' })}
+                    {...register('utrNumber')}
                     placeholder="e.g. UTR123456789012"
                     className={`input ${errors.utrNumber ? 'input-error' : ''}`}
                   />
