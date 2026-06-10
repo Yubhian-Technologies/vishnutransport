@@ -25,9 +25,9 @@ const DUE_STATUS_CONFIG = {
   rejected: { label: 'Due Payment Rejected', color: 'red', icon: XCircle },
 };
 
-function ProofUploader({ appId, currentUtr }) {
+function PendingPaymentSection({ app }) {
+  const [utr, setUtr] = useState(app.utrNumber || '');
   const [file, setFile] = useState(null);
-  const [utr, setUtr] = useState(currentUtr || '');
   const queryClient = useQueryClient();
 
   const onDrop = useCallback((accepted) => { if (accepted[0]) setFile(accepted[0]); }, []);
@@ -35,8 +35,17 @@ function ProofUploader({ appId, currentUtr }) {
     onDrop, accept: { 'image/*': [], 'application/pdf': [] }, maxSize: 5242880, maxFiles: 1,
   });
 
-  const mutation = useMutation({
-    mutationFn: () => applicationsAPI.uploadProof(appId, file, utr),
+  const utrMutation = useMutation({
+    mutationFn: () => applicationsAPI.updateUtr(app.id, utr),
+    onSuccess: () => {
+      toast.success('UTR number updated');
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const proofMutation = useMutation({
+    mutationFn: () => applicationsAPI.uploadProof(app.id, file, utr),
     onSuccess: () => {
       toast.success('Payment proof updated');
       setFile(null);
@@ -46,41 +55,63 @@ function ProofUploader({ appId, currentUtr }) {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+      {/* UTR update */}
       <div>
-        <label className="text-xs font-medium text-gray-700 mb-1 block">Transaction / UTR Number *</label>
-        <input
-          value={utr}
-          onChange={e => setUtr(e.target.value)}
-          placeholder="e.g. UTR123456789012"
-          className="input text-sm"
-        />
+        <p className="text-sm font-semibold text-gray-700 mb-1">Transaction / UTR Number</p>
+        {!app.utrNumber && (
+          <p className="text-xs text-amber-600 mb-2">UTR was not saved with your submission. Please enter it below.</p>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={utr}
+            onChange={e => setUtr(e.target.value)}
+            placeholder="e.g. UTR123456789012"
+            className="input text-sm flex-1"
+          />
+          <button
+            onClick={() => utrMutation.mutate()}
+            disabled={!utr.trim() || utr === app.utrNumber || utrMutation.isPending}
+            className="btn-primary text-sm px-4 flex-shrink-0"
+          >
+            {utrMutation.isPending ? 'Saving…' : 'Save UTR'}
+          </button>
+        </div>
       </div>
-      <div
-        {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
-      >
-        <input {...getInputProps()} />
-        {file ? (
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-sm text-gray-700 truncate max-w-xs">{file.name}</span>
-            <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); }} className="text-red-500"><X size={15} /></button>
-          </div>
-        ) : (
-          <>
-            <Upload size={22} className="mx-auto text-gray-400 mb-1" />
-            <p className="text-sm text-gray-600">Drop payment screenshot here or click to browse</p>
-            <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG, PDF up to 5MB</p>
-          </>
+
+      {/* Proof re-upload */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-1">
+          {app.paymentProofUrl ? 'Replace Payment Proof' : 'Upload Payment Proof'}
+        </p>
+        <div
+          {...getRootProps()}
+          className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
+        >
+          <input {...getInputProps()} />
+          {file ? (
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-sm text-gray-700 truncate max-w-xs">{file.name}</span>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); }} className="text-red-500"><X size={15} /></button>
+            </div>
+          ) : (
+            <>
+              <Upload size={20} className="mx-auto text-gray-400 mb-1" />
+              <p className="text-sm text-gray-500">Drop file here or click to browse</p>
+              <p className="text-xs text-gray-400 mt-0.5">JPEG, PNG, PDF up to 5MB</p>
+            </>
+          )}
+        </div>
+        {file && (
+          <button
+            onClick={() => proofMutation.mutate()}
+            disabled={proofMutation.isPending}
+            className="btn-primary w-full mt-2 text-sm"
+          >
+            {proofMutation.isPending ? 'Uploading…' : 'Upload New Proof'}
+          </button>
         )}
       </div>
-      <button
-        onClick={() => mutation.mutate()}
-        disabled={!file || !utr.trim() || mutation.isPending}
-        className="btn-primary w-full"
-      >
-        {mutation.isPending ? 'Updating…' : 'Update Payment Proof'}
-      </button>
     </div>
   );
 }
@@ -246,19 +277,7 @@ export default function ApplicationStatus() {
             </div>
           )}
 
-          {app.status === 'pending_coordinator' && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-sm font-semibold text-gray-700 mb-1">
-                {app.paymentProofUrl ? 'Update Payment Proof / UTR' : 'Upload Payment Proof'}
-              </p>
-              <p className="text-xs text-gray-400 mb-3">
-                {app.utrNumber
-                  ? `Current UTR: ${app.utrNumber} — upload a new proof to update it.`
-                  : 'Your UTR number was not saved. Please re-upload your payment proof with the correct UTR.'}
-              </p>
-              <ProofUploader appId={app.id} currentUtr={app.utrNumber || ''} />
-            </div>
-          )}
+          {app.status === 'pending_coordinator' && <PendingPaymentSection app={app} />}
         </div>
 
         {/* Due payment section */}

@@ -482,6 +482,29 @@ const accountsDueReview = async (req, res) => {
   }
 };
 
+const updateUtr = async (req, res) => {
+  try {
+    const { utrNumber } = req.body;
+    if (!utrNumber?.trim()) return res.status(400).json({ error: 'UTR number is required' });
+
+    const doc = await db.collection('applications').doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: 'Application not found' });
+
+    const app = doc.data();
+    if (app.studentId !== req.user.uid) return res.status(403).json({ error: 'Access denied' });
+    if (app.status !== 'pending_coordinator') return res.status(400).json({ error: 'UTR can only be updated while pending coordinator review' });
+
+    await db.collection('applications').doc(req.params.id).update({
+      utrNumber: utrNumber.trim(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    res.json({ message: 'UTR updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update UTR' });
+  }
+};
+
 const purgeApplication = async (req, res) => {
   try {
     const doc = await db.collection('applications').doc(req.params.id).get();

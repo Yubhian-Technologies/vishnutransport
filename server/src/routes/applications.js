@@ -12,6 +12,7 @@ const {
   uploadPaymentProof,
   submitDuePayment,
   accountsDueReview,
+  updateUtr,
   purgeApplication,
 } = require('../controllers/applicationController');
 
@@ -47,6 +48,7 @@ router.post(
 );
 
 router.patch('/:id/due-review', verifyToken, requireAccounts, accountsDueReview);
+router.patch('/:id/utr', verifyToken, requireRole(ROLES.STUDENT, ROLES.FACULTY, ROLES.BUS_INCHARGE), updateUtr);
 router.delete('/:id', verifyToken, requireCoordinator, purgeApplication);
 
 module.exports = router;
