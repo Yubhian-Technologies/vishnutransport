@@ -300,6 +300,18 @@ const coordinatorReview = async (req, res) => {
     };
 
     if (action === 'approve') {
+      // Check seat availability before freezing — count pending_accounts + approved_final
+      const [routeAppsSnap, routeDoc] = await Promise.all([
+        db.collection('applications').where('routeId', '==', app.routeId).get(),
+        db.collection('busRoutes').doc(app.routeId).get(),
+      ]);
+      const frozenCount = routeAppsSnap.docs.filter(d =>
+        [APPLICATION_STATUS.PENDING_ACCOUNTS, APPLICATION_STATUS.APPROVED_FINAL].includes(d.data().status)
+      ).length;
+      const seatCapacity = routeDoc.data()?.seatCapacity || 0;
+      if (frozenCount >= seatCapacity) {
+        return res.status(409).json({ error: 'No seats available on this route' });
+      }
       updates.status = APPLICATION_STATUS.PENDING_ACCOUNTS;
     } else {
       if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });

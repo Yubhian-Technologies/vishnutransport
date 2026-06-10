@@ -18,8 +18,9 @@ const getAllRoutes = async (req, res) => {
       .sort((a, b) => (a.routeName || '').localeCompare(b.routeName || ''));
 
     if (req.query.includeOccupancy === 'true') {
+      // Seat is frozen when coordinator approves (pending_accounts) and stays frozen on final approval
       const allApps = await db.collection('applications')
-        .where('status', '==', 'approved_final')
+        .where('status', 'in', ['pending_accounts', 'approved_final'])
         .select('routeId')
         .get();
       const countByRoute = {};
@@ -49,7 +50,7 @@ const getRoute = async (req, res) => {
 
     const apps = await db.collection('applications')
       .where('routeId', '==', req.params.id)
-      .where('status', '==', 'approved_final')
+      .where('status', 'in', ['pending_accounts', 'approved_final'])
       .get();
     const held = apps.docs.length;
     route.occupiedSeats = held;
