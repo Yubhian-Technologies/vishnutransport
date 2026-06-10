@@ -556,6 +556,7 @@ module.exports = {
   uploadPaymentProof,
   submitDuePayment,
   accountsDueReview,
+  updateUtr,
   purgeApplication,
   APPLICATION_STATUS,
 };
