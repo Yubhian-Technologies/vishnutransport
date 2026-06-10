@@ -396,6 +396,7 @@ export default function ApplicationReview() {
                     ['Due Amount', `${formatCurrency(selectedApp.dueAmount || 0)} (${selectedApp.dueStatus || 'pending'})`],
                   ] : []),
                   ['Status', <StatusBadge key="s" status={selectedApp.status} />],
+                  ['UTR / Txn No.', selectedApp.utrNumber || '—'],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 p-2.5 rounded-lg">
                     <p className="text-xs text-gray-500">{label}</p>
@@ -405,19 +406,12 @@ export default function ApplicationReview() {
               </div>
             </div>
 
-            {(selectedApp.paymentProofUrl || selectedApp.utrNumber) && (
+            {selectedApp.paymentProofUrl && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Payment Proof</p>
-                {selectedApp.utrNumber && (
-                  <p className="text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 font-mono font-semibold text-amber-800">
-                    UTR / Txn: {selectedApp.utrNumber}
-                  </p>
-                )}
-                {selectedApp.paymentProofUrl && (
-                  <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-xs inline-flex">
-                    View Document
-                  </a>
-                )}
+                <a href={selectedApp.paymentProofUrl} target="_blank" rel="noreferrer" className="btn-outline text-xs inline-flex">
+                  View Document
+                </a>
               </div>
             )}
             {selectedApp.concessionReason && (
