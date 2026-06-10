@@ -18,15 +18,17 @@ const getAllRoutes = async (req, res) => {
       .sort((a, b) => (a.routeName || '').localeCompare(b.routeName || ''));
 
     if (req.query.includeOccupancy === 'true') {
-      // Seat is frozen when coordinator approves (pending_accounts) and stays frozen on final approval
+      // Count all non-rejected apps — matches the submission-time capacity check
       const allApps = await db.collection('applications')
-        .where('status', 'in', ['pending_accounts', 'approved_final'])
-        .select('routeId')
+        .select('routeId', 'status')
         .get();
+      const RELEASED = ['rejected_l1', 'rejected_l2'];
       const countByRoute = {};
       allApps.docs.forEach(doc => {
-        const { routeId } = doc.data();
-        countByRoute[routeId] = (countByRoute[routeId] || 0) + 1;
+        const { routeId, status } = doc.data();
+        if (!RELEASED.includes(status)) {
+          countByRoute[routeId] = (countByRoute[routeId] || 0) + 1;
+        }
       });
       routes.forEach(route => {
         route.occupiedSeats = countByRoute[route.id] || 0;
@@ -50,9 +52,9 @@ const getRoute = async (req, res) => {
 
     const apps = await db.collection('applications')
       .where('routeId', '==', req.params.id)
-      .where('status', 'in', ['pending_accounts', 'approved_final'])
       .get();
-    const held = apps.docs.length;
+    const RELEASED = ['rejected_l1', 'rejected_l2'];
+    const held = apps.docs.filter(d => !RELEASED.includes(d.data().status)).length;
     route.occupiedSeats = held;
     route.availableSeats = route.seatCapacity - held;
 
