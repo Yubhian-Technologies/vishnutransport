@@ -2,9 +2,73 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { routesAPI, collegesAPI } from '../../utils/api';
+import { routesAPI, collegesAPI, applicationsAPI } from '../../utils/api';
 import { formatCurrency } from '../../utils/helpers';
-import { Bus, MapPin, Users, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
+import { Bus, MapPin, ChevronDown, ChevronRight, Building2, User, Loader2 } from 'lucide-react';
+
+const STATUS_LABELS = {
+  pending_coordinator: { label: 'Pending Coordinator', cls: 'bg-yellow-100 text-yellow-700' },
+  pending_accounts:    { label: 'Pending Accounts',    cls: 'bg-blue-100 text-blue-700' },
+  approved_final:      { label: 'Approved',            cls: 'bg-green-100 text-green-700' },
+  rejected_l1:         { label: 'Rejected (L1)',        cls: 'bg-red-100 text-red-600' },
+  rejected_l2:         { label: 'Rejected (L2)',        cls: 'bg-red-100 text-red-600' },
+};
+
+function StatusBadge({ status }) {
+  const cfg = STATUS_LABELS[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>;
+}
+
+function RouteApplications({ routeId }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['guest-route-applications', routeId],
+    queryFn: () => applicationsAPI.getAll({ routeId, limit: 200 }),
+  });
+
+  if (isLoading) return (
+    <div className="flex items-center gap-2 text-sm text-gray-500 py-4 justify-center">
+      <Loader2 size={15} className="animate-spin" /> Loading students...
+    </div>
+  );
+  if (isError) return <p className="text-sm text-red-500 py-2">Failed to load student data.</p>;
+
+  const apps = data?.data || [];
+  if (apps.length === 0) return <p className="text-sm text-gray-400 py-2 text-center">No applications for this route yet.</p>;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-xs text-gray-500 border-b border-gray-100">
+            <th className="text-left py-2 pr-4 font-medium">#</th>
+            <th className="text-left py-2 pr-4 font-medium">Name</th>
+            <th className="text-left py-2 pr-4 font-medium">Reg No.</th>
+            <th className="text-left py-2 pr-4 font-medium">College</th>
+            <th className="text-left py-2 pr-4 font-medium">Branch</th>
+            <th className="text-left py-2 pr-4 font-medium">Boarding Point</th>
+            <th className="text-left py-2 pr-4 font-medium">Fare</th>
+            <th className="text-left py-2 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {apps.map((app, i) => (
+            <tr key={app.id} className="hover:bg-gray-50">
+              <td className="py-2 pr-4 text-gray-400">{i + 1}</td>
+              <td className="py-2 pr-4 font-medium text-gray-800">{app.name || '—'}</td>
+              <td className="py-2 pr-4 text-gray-600">{app.regNo || '—'}</td>
+              <td className="py-2 pr-4 text-gray-600 max-w-[140px] truncate">{app.college || '—'}</td>
+              <td className="py-2 pr-4 text-gray-600">{app.branch || '—'}</td>
+              <td className="py-2 pr-4 text-gray-600">{app.boardingPointName || '—'}</td>
+              <td className="py-2 pr-4 text-gray-700">{app.fare != null ? formatCurrency(app.fare) : '—'}</td>
+              <td className="py-2"><StatusBadge status={app.status} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="text-xs text-gray-400 mt-2">{apps.length} application{apps.length !== 1 ? 's' : ''} total</p>
+    </div>
+  );
+}
 
 export default function GuestRoutes() {
   const [selectedCollege, setSelectedCollege] = useState('all');
@@ -121,9 +185,10 @@ export default function GuestRoutes() {
                     </div>
                   </button>
 
-                  {/* Expanded details */}
+                  {/* Expanded details + students */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+                      {/* Route meta */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                         {route.routeNumber && (
                           <div>
@@ -147,12 +212,6 @@ export default function GuestRoutes() {
                           <div>
                             <p className="text-xs text-gray-400">Driver Phone</p>
                             <p className="font-medium text-gray-800">{route.driverPhone}</p>
-                          </div>
-                        )}
-                        {route.partialFare && (
-                          <div>
-                            <p className="text-xs text-gray-400">Partial Fare</p>
-                            <p className="font-medium text-gray-800">{formatCurrency(route.partialFare)}</p>
                           </div>
                         )}
                         {route.inchargeName && (
@@ -179,23 +238,13 @@ export default function GuestRoutes() {
                         </div>
                       )}
 
-                      {/* Colleges served */}
-                      {Array.isArray(route.collegeIds) && route.collegeIds.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 mb-2">Colleges Served</p>
-                          <div className="flex flex-wrap gap-2">
-                            {route.collegeIds.map(cid => {
-                              const col = colleges.find(c => c.id === cid);
-                              return col ? (
-                                <span key={cid} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded text-xs text-blue-700">
-                                  <Building2 size={10} />
-                                  {col.name}
-                                </span>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
+                      {/* Students table */}
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-3 flex items-center gap-1">
+                          <User size={12} /> Students Applied
+                        </p>
+                        <RouteApplications routeId={route.id} />
+                      </div>
                     </div>
                   )}
                 </div>
