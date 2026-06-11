@@ -1,255 +1,198 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Layout from '../../components/common/Layout';
+import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { routesAPI, collegesAPI, applicationsAPI } from '../../utils/api';
-import { formatCurrency } from '../../utils/helpers';
-import { Bus, MapPin, ChevronDown, ChevronRight, Building2, User, Loader2 } from 'lucide-react';
+import { applicationsAPI, routesAPI } from '../../utils/api';
+import { formatCurrency, formatDateTime } from '../../utils/helpers';
+import { Search } from 'lucide-react';
 
-const STATUS_LABELS = {
-  pending_coordinator: { label: 'Pending Coordinator', cls: 'bg-yellow-100 text-yellow-700' },
-  pending_accounts:    { label: 'Pending Accounts',    cls: 'bg-blue-100 text-blue-700' },
-  approved_final:      { label: 'Approved',            cls: 'bg-green-100 text-green-700' },
-  rejected_l1:         { label: 'Rejected (L1)',        cls: 'bg-red-100 text-red-600' },
-  rejected_l2:         { label: 'Rejected (L2)',        cls: 'bg-red-100 text-red-600' },
-};
-
-function StatusBadge({ status }) {
-  const cfg = STATUS_LABELS[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
-  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>;
-}
-
-function RouteApplications({ routeId }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['guest-route-applications', routeId],
-    queryFn: () => applicationsAPI.getAll({ routeId, limit: 200 }),
-  });
-
-  if (isLoading) return (
-    <div className="flex items-center gap-2 text-sm text-gray-500 py-4 justify-center">
-      <Loader2 size={15} className="animate-spin" /> Loading students...
-    </div>
-  );
-  if (isError) return <p className="text-sm text-red-500 py-2">Failed to load student data.</p>;
-
-  const apps = data?.data || [];
-  if (apps.length === 0) return <p className="text-sm text-gray-400 py-2 text-center">No applications for this route yet.</p>;
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-xs text-gray-500 border-b border-gray-100">
-            <th className="text-left py-2 pr-4 font-medium">#</th>
-            <th className="text-left py-2 pr-4 font-medium">Name</th>
-            <th className="text-left py-2 pr-4 font-medium">Reg No.</th>
-            <th className="text-left py-2 pr-4 font-medium">College</th>
-            <th className="text-left py-2 pr-4 font-medium">Branch</th>
-            <th className="text-left py-2 pr-4 font-medium">Boarding Point</th>
-            <th className="text-left py-2 pr-4 font-medium">Fare</th>
-            <th className="text-left py-2 font-medium">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {apps.map((app, i) => (
-            <tr key={app.id} className="hover:bg-gray-50">
-              <td className="py-2 pr-4 text-gray-400">{i + 1}</td>
-              <td className="py-2 pr-4 font-medium text-gray-800">{app.name || '—'}</td>
-              <td className="py-2 pr-4 text-gray-600">{app.regNo || '—'}</td>
-              <td className="py-2 pr-4 text-gray-600 max-w-[140px] truncate">{app.college || '—'}</td>
-              <td className="py-2 pr-4 text-gray-600">{app.branch || '—'}</td>
-              <td className="py-2 pr-4 text-gray-600">{app.boardingPointName || '—'}</td>
-              <td className="py-2 pr-4 text-gray-700">{app.fare != null ? formatCurrency(app.fare) : '—'}</td>
-              <td className="py-2"><StatusBadge status={app.status} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="text-xs text-gray-400 mt-2">{apps.length} application{apps.length !== 1 ? 's' : ''} total</p>
-    </div>
-  );
-}
+const DUE_FILTER_OPTIONS = [
+  { label: 'Payment Status', value: '' },
+  { label: 'Full Payment', value: 'full' },
+  { label: 'Has Due Amount', value: 'has_due' },
+];
 
 export default function GuestRoutes() {
-  const [selectedCollege, setSelectedCollege] = useState('all');
-  const [expandedRoute, setExpandedRoute] = useState(null);
+  const [search, setSearch] = useState('');
+  const [routeFilter, setRouteFilter] = useState('');
+  const [collegeFilter, setCollegeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dueFilter, setDueFilter] = useState('');
 
-  const { data: routes = [], isLoading: routesLoading } = useQuery({
-    queryKey: ['routes-occupancy'],
-    queryFn: () => routesAPI.getAll({ includeOccupancy: 'true' }),
+  const { data, isLoading } = useQuery({
+    queryKey: ['guest-all-applications'],
+    queryFn: () => applicationsAPI.getAll({ limit: 500 }),
   });
 
-  const { data: colleges = [] } = useQuery({
-    queryKey: ['colleges'],
-    queryFn: collegesAPI.getAll,
+  const { data: routesData = [] } = useQuery({
+    queryKey: ['routes-all'],
+    queryFn: () => routesAPI.getAll(),
   });
 
-  const filtered = selectedCollege === 'all'
-    ? routes
-    : routes.filter(r => Array.isArray(r.collegeIds) && r.collegeIds.includes(selectedCollege));
+  const busNumberMap = useMemo(() =>
+    Object.fromEntries(routesData.map(r => [r.id, r.busNumber])),
+    [routesData]
+  );
+
+  const allApps = data?.data || [];
+
+  const colleges = useMemo(() => {
+    const seen = new Set();
+    return allApps.map(a => a.college).filter(c => c && !seen.has(c) && seen.add(c)).sort();
+  }, [allApps]);
+
+  const routes = useMemo(() => {
+    const seen = new Set();
+    return allApps
+      .map(a => ({ id: a.routeId, name: a.routeName }))
+      .filter(r => r.name && !seen.has(r.id) && seen.add(r.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allApps]);
+
+  const apps = useMemo(() => {
+    return allApps.filter(app => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!app.name?.toLowerCase().includes(q) && !(app.regNo || '').toLowerCase().includes(q)) return false;
+      }
+      if (routeFilter && app.routeId !== routeFilter) return false;
+      if (collegeFilter && app.college !== collegeFilter) return false;
+      if (statusFilter && app.status !== statusFilter) return false;
+      if (dueFilter) {
+        const isPartial = app.paymentType === 'partial' || app.paymentType === 'coordinator_partial';
+        const clearedDue = isPartial && app.dueStatus === 'verified';
+        if (dueFilter === 'full' && isPartial && !clearedDue) return false;
+        if (dueFilter === 'has_due' && (!isPartial || clearedDue)) return false;
+      }
+      return true;
+    });
+  }, [allApps, search, routeFilter, collegeFilter, statusFilter, dueFilter]);
+
+  const hasActiveFilters = search || routeFilter || collegeFilter || statusFilter || dueFilter;
+  const resetFilters = () => {
+    setSearch(''); setRouteFilter(''); setCollegeFilter(''); setStatusFilter(''); setDueFilter('');
+  };
 
   return (
     <Layout title="Bus Routes">
       <div className="space-y-4">
-        {/* College filter */}
-        <div className="card">
-          <div className="flex flex-wrap items-center gap-2">
-            <Building2 size={16} className="text-gray-500" />
-            <span className="text-sm text-gray-600 font-medium">Filter by College:</span>
-            <button
-              onClick={() => setSelectedCollege('all')}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                selectedCollege === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              All Colleges
+        {/* Filter bar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[180px] flex-1 max-w-xs">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search name or reg no..."
+              className="input pl-9 text-sm"
+            />
+          </div>
+
+          <select value={routeFilter} onChange={e => setRouteFilter(e.target.value)} className="input text-sm w-48">
+            <option value="">All Routes</option>
+            {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+
+          <select value={collegeFilter} onChange={e => setCollegeFilter(e.target.value)} className="input text-sm w-48">
+            <option value="">All Colleges</option>
+            {colleges.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input text-sm w-44">
+            <option value="">All Status</option>
+            <option value="pending_coordinator">Pending Coordinator</option>
+            <option value="pending_accounts">Pending Accounts</option>
+            <option value="approved_final">Confirmed</option>
+            <option value="rejected_l1">Rejected (L1)</option>
+            <option value="rejected_l2">Rejected (L2)</option>
+          </select>
+
+          <select value={dueFilter} onChange={e => setDueFilter(e.target.value)} className="input text-sm w-44">
+            {DUE_FILTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          {hasActiveFilters && (
+            <button onClick={resetFilters} className="text-xs text-gray-500 hover:text-gray-800 underline whitespace-nowrap">
+              Clear filters
             </button>
-            {colleges.map(college => (
-              <button
-                key={college.id}
-                onClick={() => setSelectedCollege(college.id)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  selectedCollege === college.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {college.name}
-              </button>
-            ))}
+          )}
+
+          <div className="ml-auto">
+            <span className="text-xs text-gray-400">{apps.length} result{apps.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
 
-        {routesLoading ? (
-          <LoadingSpinner />
-        ) : filtered.length === 0 ? (
-          <div className="card text-center py-10 text-gray-500 text-sm">
-            No routes found for this college.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map(route => {
-              const occupancy = route.seatCapacity > 0
-                ? Math.round(((route.occupiedSeats || 0) / route.seatCapacity) * 100)
-                : 0;
-              const isExpanded = expandedRoute === route.id;
+        {/* Table */}
+        {isLoading ? <LoadingSpinner /> : (
+          <div className="card p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['#', 'Student', 'College / Route', 'Fare', 'Status', 'Submitted'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {apps.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm">
+                        No applications found.
+                      </td>
+                    </tr>
+                  ) : apps.map((app, i) => (
+                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-gray-400 text-xs w-8">{i + 1}</td>
 
-              return (
-                <div key={route.id} className="card">
-                  <button
-                    className="w-full text-left"
-                    onClick={() => setExpandedRoute(isExpanded ? null : route.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
-                          <Bus size={18} className="text-blue-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-gray-900">{route.routeName}</p>
-                          {(route.startPoint || route.endPoint) && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                              <MapPin size={11} />
-                              {route.startPoint}{route.startPoint && route.endPoint ? ' → ' : ''}{route.endPoint}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 flex-shrink-0 ml-3">
-                        <div className="text-right hidden sm:block">
-                          <p className="text-sm font-semibold text-gray-800">{formatCurrency(route.fare)}</p>
-                          <p className="text-xs text-gray-400">per year</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold ${
-                            occupancy >= 90 ? 'text-red-600' : occupancy >= 70 ? 'text-yellow-600' : 'text-green-600'
-                          }`}>
-                            {route.availableSeats ?? (route.seatCapacity - (route.occupiedSeats || 0))} left
-                          </p>
-                          <p className="text-xs text-gray-400">{route.occupiedSeats || 0}/{route.seatCapacity} seats</p>
-                        </div>
-                        {isExpanded ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
-                      </div>
-                    </div>
-
-                    {/* Occupancy bar */}
-                    <div className="mt-3 w-full bg-gray-100 rounded-full h-1.5">
-                      <div
-                        className={`h-1.5 rounded-full transition-all ${
-                          occupancy >= 90 ? 'bg-red-500' : occupancy >= 70 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: `${Math.min(occupancy, 100)}%` }}
-                      />
-                    </div>
-                  </button>
-
-                  {/* Expanded details + students */}
-                  {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
-                      {/* Route meta */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                        {route.routeNumber && (
-                          <div>
-                            <p className="text-xs text-gray-400">Route No.</p>
-                            <p className="font-medium text-gray-800">{route.routeNumber}</p>
-                          </div>
-                        )}
-                        {route.busNumber && (
-                          <div>
-                            <p className="text-xs text-gray-400">Bus No.</p>
-                            <p className="font-medium text-gray-800">{route.busNumber}</p>
-                          </div>
-                        )}
-                        {route.driverName && (
-                          <div>
-                            <p className="text-xs text-gray-400">Driver</p>
-                            <p className="font-medium text-gray-800">{route.driverName}</p>
-                          </div>
-                        )}
-                        {route.driverPhone && (
-                          <div>
-                            <p className="text-xs text-gray-400">Driver Phone</p>
-                            <p className="font-medium text-gray-800">{route.driverPhone}</p>
-                          </div>
-                        )}
-                        {route.inchargeName && (
-                          <div>
-                            <p className="text-xs text-gray-400">Incharge</p>
-                            <p className="font-medium text-gray-800">{route.inchargeName}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Stops */}
-                      {Array.isArray(route.stops) && route.stops.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 mb-2">Stops</p>
-                          <div className="flex flex-wrap gap-2">
-                            {route.stops.map((stop, i) => (
-                              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700">
-                                <MapPin size={10} className="text-gray-400" />
-                                {stop.name}
-                                {stop.time && <span className="text-gray-400">· {stop.time}</span>}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Students table */}
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-3 flex items-center gap-1">
-                          <User size={12} /> Students Applied
+                      {/* Student */}
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900 uppercase text-xs tracking-wide">{app.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {app.regNo && <span>{app.regNo}</span>}
+                          {app.regNo && app.branch && <span> · </span>}
+                          {app.branch && <span>{app.branch}</span>}
                         </p>
-                        <RouteApplications routeId={route.id} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                        <span className="mt-1 inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 capitalize">
+                          {app.applicantRole === 'bus_incharge' ? 'Incharge' : app.applicantRole || 'Student'}
+                        </span>
+                      </td>
+
+                      {/* College / Route */}
+                      <td className="px-4 py-3">
+                        <p className="text-xs font-medium text-gray-800 uppercase tracking-wide">
+                          {app.college || (app.applicantRole === 'bus_incharge' ? 'Staff' : '—')}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">{app.routeName || '—'}</p>
+                        {busNumberMap[app.routeId] && (
+                          <p className="text-xs font-medium text-blue-600 mt-0.5">
+                            Bus: {busNumberMap[app.routeId]}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Fare */}
+                      <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
+                        {formatCurrency(app.fare)}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <StatusBadge status={app.status} />
+                      </td>
+
+                      {/* Submitted */}
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        {formatDateTime(app.submittedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
