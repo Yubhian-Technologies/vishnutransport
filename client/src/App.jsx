@@ -38,6 +38,7 @@ import UserManagement from './pages/admin/UserManagement';
 import SystemConfig from './pages/admin/SystemConfig';
 
 import GuestDashboard from './pages/guest/GuestDashboard';
+import GuestRoutes from './pages/guest/GuestRoutes';
 import GuestManagement from './pages/coordinator/GuestManagement';
 
 const RoleRouter = () => {
@@ -106,6 +107,7 @@ export default function App() {
 
       {/* Guest */}
       <Route path="/guest" element={<ProtectedRoute roles={['guest']}><GuestDashboard /></ProtectedRoute>} />
+      <Route path="/guest/routes" element={<ProtectedRoute roles={['guest']}><GuestRoutes /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

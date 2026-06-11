@@ -59,6 +59,7 @@ const NAV_CONFIG = {
   ],
   guest: [
     { to: '/guest', icon: LayoutDashboard, label: 'Overview', end: true },
+    { to: '/guest/routes', icon: Route, label: 'Bus Routes' },
   ],
 };
 
