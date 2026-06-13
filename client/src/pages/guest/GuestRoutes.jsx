@@ -4,8 +4,8 @@ import Layout from '../../components/common/Layout';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { applicationsAPI, routesAPI } from '../../utils/api';
-import { formatCurrency, formatDateTime } from '../../utils/helpers';
-import { Search } from 'lucide-react';
+import { formatCurrency, formatDateTime, exportToCSV, STATUS_LABELS } from '../../utils/helpers';
+import { Search, Download } from 'lucide-react';
 
 const DUE_FILTER_OPTIONS = [
   { label: 'Payment Status', value: '' },
@@ -74,6 +74,24 @@ export default function GuestRoutes() {
     setSearch(''); setRouteFilter(''); setCollegeFilter(''); setStatusFilter(''); setDueFilter('');
   };
 
+  const handleExport = () => {
+    exportToCSV(apps.map((app, i) => ({
+      '#': i + 1,
+      'Name': app.name || '',
+      'Reg No': app.regNo || '',
+      'Branch': app.branch || '',
+      'Role': app.applicantRole === 'bus_incharge' ? 'Incharge' : app.applicantRole || 'Student',
+      'College': app.college || '',
+      'Route': app.routeName || '',
+      'Bus No': busNumberMap[app.routeId] || '',
+      'Boarding Point': app.boardingPointName || '',
+      'Fare': app.fare ?? '',
+      'Payment Type': app.paymentType || '',
+      'Status': STATUS_LABELS[app.status] || app.status || '',
+      'Submitted At': app.submittedAt ? formatDateTime(app.submittedAt) : '',
+    })), 'bus_applications');
+  };
+
   return (
     <Layout title="Bus Routes">
       <div className="space-y-4">
@@ -118,8 +136,11 @@ export default function GuestRoutes() {
             </button>
           )}
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-gray-400">{apps.length} result{apps.length !== 1 ? 's' : ''}</span>
+            <button onClick={handleExport} disabled={apps.length === 0} className="btn-outline text-sm">
+              <Download size={15} /> Export Excel
+            </button>
           </div>
         </div>
 
