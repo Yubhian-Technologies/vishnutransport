@@ -23,6 +23,8 @@ export default function PaymentVerification() {
   const [collegeFilter, setCollegeFilter] = useState('');
   const [statusFilterInline, setStatusFilterInline] = useState('');
   const [paymentTypeFilter, setPaymentTypeFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectTargetId, setRejectTargetId] = useState(null);
@@ -107,6 +109,14 @@ export default function PaymentVerification() {
       if (paymentTypeFilter === 'full') return a.paymentType === 'full' || a.paymentType === 'concession' || clearedDue;
       if (paymentTypeFilter === 'due') return isPartial && !clearedDue;
       return true;
+    })
+    .filter(a => {
+      const dateStr = isDueTab ? a.duePaymentSubmittedAt : a.submittedAt;
+      if (!dateStr) return !dateFrom && !dateTo;
+      const d = dateStr.slice(0, 10); // YYYY-MM-DD
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
     });
 
   const collegeOptions = React.useMemo(
@@ -114,7 +124,7 @@ export default function PaymentVerification() {
     [baseApps]
   );
 
-  const hasFilters = routeFilter || collegeFilter || statusFilterInline || paymentTypeFilter;
+  const hasFilters = routeFilter || collegeFilter || statusFilterInline || paymentTypeFilter || dateFrom || dateTo;
 
   return (
     <Layout title="Payment Verification">
@@ -200,8 +210,28 @@ export default function PaymentVerification() {
             <option value="full">Full Payment</option>
             <option value="due">Partial / Due</option>
           </select>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 whitespace-nowrap">From</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              max={dateTo || undefined}
+              className="input py-1 text-sm w-36"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 whitespace-nowrap">To</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              min={dateFrom || undefined}
+              className="input py-1 text-sm w-36"
+            />
+          </div>
           {hasFilters && (
-            <button onClick={() => { setRouteFilter(''); setCollegeFilter(''); setStatusFilterInline(''); setPaymentTypeFilter(''); }} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+            <button onClick={() => { setRouteFilter(''); setCollegeFilter(''); setStatusFilterInline(''); setPaymentTypeFilter(''); setDateFrom(''); setDateTo(''); }} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
               <X size={13} /> Clear
             </button>
           )}
