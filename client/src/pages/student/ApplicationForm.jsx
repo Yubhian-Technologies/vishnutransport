@@ -530,7 +530,7 @@ export default function ApplicationForm() {
                 )}
 
                 <div>
-                  <label className="label">Transaction / UTR Number *</label>
+                  <label className="label">UTR Number *</label>
                   <input
                     {...register('utrNumber')}
                     placeholder="e.g. UTR123456789012"

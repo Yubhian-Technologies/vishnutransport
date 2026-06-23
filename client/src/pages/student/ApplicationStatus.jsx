@@ -58,7 +58,7 @@ function PendingPaymentSection({ app }) {
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
       {/* UTR update */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-1">Transaction / UTR Number</p>
+        <p className="text-sm font-semibold text-gray-700 mb-1">UTR Number</p>
         {!app.utrNumber && (
           <p className="text-xs text-amber-600 mb-2">UTR was not saved with your submission. Please enter it below.</p>
         )}
@@ -146,7 +146,7 @@ function DuePaymentUploader({ appId }) {
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs font-medium text-gray-700 mb-1 block">Transaction / UTR Number *</label>
+        <label className="text-xs font-medium text-gray-700 mb-1 block">UTR Number *</label>
         <input
           value={utrNumber}
           onChange={e => setUtrNumber(e.target.value)}

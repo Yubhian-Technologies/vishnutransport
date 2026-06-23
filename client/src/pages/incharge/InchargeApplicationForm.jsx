@@ -385,7 +385,7 @@ export default function InchargeApplicationForm() {
                 )}
 
                 <div>
-                  <label className="label">UTR / Transaction Number</label>
+                  <label className="label">UTR Number</label>
                   <input {...register('utrNumber')} placeholder="e.g. UTR123456789012" className="input" />
                 </div>
                 <div>
