@@ -37,8 +37,8 @@ export default function PaymentVerification() {
   const { data, isLoading } = useQuery({
     queryKey: ['applications-accounts', statusFilter],
     queryFn: () => isDueTab
-      ? applicationsAPI.getAll({ status: 'approved_final' })
-      : applicationsAPI.getAll({ status: statusFilter }),
+      ? applicationsAPI.getAll({ status: 'approved_final', limit: 1000 })
+      : applicationsAPI.getAll({ status: statusFilter, limit: 1000 }),
   });
 
   const { data: routesData } = useQuery({

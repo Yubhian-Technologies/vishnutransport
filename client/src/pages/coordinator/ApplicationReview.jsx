@@ -42,7 +42,7 @@ export default function ApplicationReview() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['applications', statusFilter],
-    queryFn: () => applicationsAPI.getAll({ status: statusFilter }),
+    queryFn: () => applicationsAPI.getAll({ status: statusFilter, limit: 1000 }),
   });
 
   const { data: routesData } = useQuery({
