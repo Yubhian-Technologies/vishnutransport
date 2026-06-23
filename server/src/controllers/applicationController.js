@@ -261,6 +261,13 @@ const getAllApplications = async (req, res) => {
 
     all = all.sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
 
+    // Remove stale rejected records for students who now have an active/confirmed application
+    const rejectedStatuses = new Set([APPLICATION_STATUS.REJECTED_L1, APPLICATION_STATUS.REJECTED_L2]);
+    const activeStudentIds = new Set(
+      all.filter(a => !rejectedStatuses.has(a.status)).map(a => a.studentId)
+    );
+    all = all.filter(a => !rejectedStatuses.has(a.status) || !activeStudentIds.has(a.studentId));
+
     const startIndex = (Number(page) - 1) * Number(limit);
     const paginated = all.slice(startIndex, startIndex + Number(limit));
 
