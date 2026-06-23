@@ -87,19 +87,29 @@ export default function InchargeApplicationForm() {
   });
 
   useEffect(() => {
-    if (userProfile) {
-      reset(prev => ({
-        ...prev,
-        nameAsPerSSC: userProfile.nameAsPerSSC || userProfile.name || prev.nameAsPerSSC,
-        gender: userProfile.gender || prev.gender,
-        bloodGroup: userProfile.bloodGroup || prev.bloodGroup,
-        branch: userProfile.branch || prev.branch,
-        collegeId: userProfile.collegeId || prev.collegeId,
-        address: userProfile.address || prev.address,
-        studentPhone: userProfile.studentPhone || userProfile.phone || prev.studentPhone,
-      }));
+    if (!userProfile || colleges.length === 0) return;
+
+    // Match collegeId from profile, or fall back to name match
+    let resolvedCollegeId = userProfile.collegeId || '';
+    if (!resolvedCollegeId) {
+      const profileCollegeName = (userProfile.collegeName || userProfile.college || '').toLowerCase().trim();
+      if (profileCollegeName) {
+        const match = colleges.find(c => (c.name || '').toLowerCase().trim() === profileCollegeName);
+        if (match) resolvedCollegeId = match.id;
+      }
     }
-  }, [userProfile]);
+
+    reset(prev => ({
+      ...prev,
+      nameAsPerSSC: userProfile.nameAsPerSSC || userProfile.name || prev.nameAsPerSSC,
+      gender: userProfile.gender || prev.gender,
+      bloodGroup: userProfile.bloodGroup || prev.bloodGroup,
+      branch: userProfile.branch || prev.branch,
+      collegeId: resolvedCollegeId || prev.collegeId,
+      address: userProfile.address || prev.address,
+      studentPhone: userProfile.studentPhone || userProfile.phone || prev.studentPhone,
+    }));
+  }, [userProfile, colleges]);
 
   const watchedBPId = watch('boardingPointId');
   const watchedCollegeId = watch('collegeId');
