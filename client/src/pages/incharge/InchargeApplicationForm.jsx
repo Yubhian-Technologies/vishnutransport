@@ -259,14 +259,13 @@ export default function InchargeApplicationForm() {
                     {errors.branch && <p className="text-red-500 text-xs mt-1">{errors.branch.message}</p>}
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="label">College *</label>
-                    <div className="select-wrapper">
-                      <select {...register('collegeId')} className={`select ${errors.collegeId ? 'input-error' : ''}`}>
-                        <option value="">Select College</option>
-                        {colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    </div>
-                    {errors.collegeId && <p className="text-red-500 text-xs mt-1">{errors.collegeId.message}</p>}
+                    <label className="label">College</label>
+                    <input
+                      readOnly
+                      value={selectedCollege?.name || ''}
+                      className="input bg-gray-50 text-gray-600 cursor-not-allowed"
+                    />
+                    <input type="hidden" {...register('collegeId')} />
                   </div>
                   <div>
                     <label className="label">Gender *</label>
