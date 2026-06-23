@@ -23,6 +23,17 @@ const submitApplication = async (req, res) => {
       return res.status(409).json({ error: 'You already have an active application' });
     }
 
+    // Delete old rejected applications before creating the new one
+    const rejectedDocs = existingSnap.docs.filter(d => {
+      const s = d.data().status;
+      return s === APPLICATION_STATUS.REJECTED_L1 || s === APPLICATION_STATUS.REJECTED_L2;
+    });
+    if (rejectedDocs.length > 0) {
+      const batch = db.batch();
+      rejectedDocs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+
     const {
       name, email, regNo, aadhaar, branch, college, collegeId,
       routeId, boardingPointId, paymentType, partialPermissionId, concessionPermissionId,
