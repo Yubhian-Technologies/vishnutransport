@@ -403,7 +403,7 @@ export default function AttendanceScanner() {
                     >
                       <Avatar name={student.name} photoURL={photos[student.studentId]} />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 truncate">{student.name}</p>
+                        <p className="font-medium text-sm text-gray-900 leading-snug">{student.name}</p>
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                           <span>{student.regNo}</span>
                           <span>·</span>
@@ -466,7 +466,7 @@ export default function AttendanceScanner() {
                     <div key={r.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
                       <Avatar name={r.studentName} photoURL={photos[r.studentId]} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{r.studentName}</p>
+                        <p className="text-sm font-medium leading-snug">{r.studentName}</p>
                         <p className="text-xs text-gray-400">{r.regNo} · {r.boardingPointName}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
