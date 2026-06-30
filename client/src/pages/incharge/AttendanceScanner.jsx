@@ -10,14 +10,44 @@ import {
   Sun, Sunset, Users, Search, MapPin,
 } from 'lucide-react';
 
-function Avatar({ name, photoURL }) {
+function Avatar({ name, photoURL, onOpen }) {
   const initials = (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   if (photoURL) {
-    return <img src={photoURL} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-200" />;
+    return (
+      <img
+        src={photoURL}
+        alt={name}
+        onClick={() => onOpen?.(photoURL)}
+        className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+      />
+    );
   }
   return (
     <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
       {initials}
+    </div>
+  );
+}
+
+function PhotoLightbox({ url, onClose }) {
+  if (!url) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      onClick={onClose}
+    >
+      <img
+        src={url}
+        alt="Student photo"
+        className="max-w-[90vw] max-h-[90vh] rounded-xl object-contain shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      />
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white bg-black/50 rounded-full w-9 h-9 flex items-center justify-center text-xl hover:bg-black/70"
+      >
+        ×
+      </button>
     </div>
   );
 }
@@ -140,6 +170,7 @@ export default function AttendanceScanner() {
   const [bpFilter, setBpFilter] = useState('');
   const [searchManual, setSearchManual] = useState('');
   const [markingId, setMarkingId] = useState(null);
+  const [previewPhoto, setPreviewPhoto] = useState(null);
 
   /* ── Queries ── */
   const { data: routeData, isLoading: recordsLoading } = useQuery({
@@ -401,7 +432,7 @@ export default function AttendanceScanner() {
                           : 'bg-white border-gray-200 hover:border-primary-300 hover:bg-primary-50'
                       }`}
                     >
-                      <Avatar name={student.name} photoURL={photos[student.studentId]} />
+                      <Avatar name={student.name} photoURL={photos[student.studentId]} onOpen={setPreviewPhoto} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 leading-snug">{student.name}</p>
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
@@ -464,7 +495,7 @@ export default function AttendanceScanner() {
                   </p>
                   {pr.map(r => (
                     <div key={r.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
-                      <Avatar name={r.studentName} photoURL={photos[r.studentId]} />
+                      <Avatar name={r.studentName} photoURL={photos[r.studentId]} onOpen={setPreviewPhoto} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-snug">{r.studentName}</p>
                         <p className="text-xs text-gray-400">{r.regNo} · {r.boardingPointName}</p>
@@ -484,6 +515,7 @@ export default function AttendanceScanner() {
         </div>
 
       </div>
+      <PhotoLightbox url={previewPhoto} onClose={() => setPreviewPhoto(null)} />
     </Layout>
   );
 }
