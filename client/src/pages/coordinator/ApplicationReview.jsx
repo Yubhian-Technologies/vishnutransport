@@ -371,6 +371,7 @@ export default function ApplicationReview() {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact Details</p>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
+                  ['Email', selectedApp.email || '—'],
                   ['Student Phone', selectedApp.studentPhone || '—'],
                   ['Emergency Contact', selectedApp.emergencyContact || '—'],
                   ['Parent / Guardian', selectedApp.parentName || '—'],
