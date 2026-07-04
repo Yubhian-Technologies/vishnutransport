@@ -120,7 +120,7 @@ const submitApplication = async (req, res) => {
         return res.status(400).json({ error: 'Invalid or expired concession permission' });
       }
       const conc = concDoc.data();
-      fare = conc.concessionFee;
+      fare = Math.max(0, fullFare - conc.concessionFee);
       dueAmount = 0;
       dueStatus = null;
       concessionReason = conc.reason;

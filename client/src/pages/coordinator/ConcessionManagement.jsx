@@ -109,18 +109,18 @@ export default function ConcessionManagement() {
                 </select>
               </div>
               <div>
-                <label className="label">Concession Fee (₹) *</label>
+                <label className="label">Discount Amount (₹) *</label>
                 <input
                   type="number"
                   value={form.concessionFee}
                   onChange={set('concessionFee')}
-                  placeholder="e.g. 15000"
+                  placeholder="e.g. 7500"
                   min={1}
                   className="input"
                 />
-                {form.concessionFee && selectedRoute && (
+                {form.concessionFee && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Student pays <span className="font-semibold text-primary-700">{formatCurrency(Number(form.concessionFee))}</span> instead of the route fare
+                    Discount of <span className="font-semibold text-amber-600">{formatCurrency(Number(form.concessionFee))}</span> will be deducted from the actual fare
                   </p>
                 )}
               </div>
@@ -164,7 +164,7 @@ export default function ConcessionManagement() {
                         {c.routeName} · {c.boardingPointName}
                       </p>
                       <p className="text-xs mt-0.5">
-                        Fee: <span className="font-semibold text-primary-700">{formatCurrency(c.concessionFee)}</span>
+                        Discount: <span className="font-semibold text-amber-600">- {formatCurrency(c.concessionFee)}</span>
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 italic">Reason: {c.reason}</p>
                     </div>
@@ -201,7 +201,7 @@ export default function ConcessionManagement() {
                       <p className="font-medium text-sm">{c.studentName || c.studentEmail}</p>
                       <p className="text-xs text-gray-400">{c.studentEmail}</p>
                       <p className="text-xs text-gray-600 mt-0.5">{c.routeName} · {c.boardingPointName}</p>
-                      <p className="text-xs mt-0.5">Fee: <span className="font-semibold">{formatCurrency(c.concessionFee)}</span></p>
+                      <p className="text-xs mt-0.5">Discount: <span className="font-semibold text-amber-600">- {formatCurrency(c.concessionFee)}</span></p>
                       <p className="text-xs text-gray-500 mt-0.5 italic">Reason: {c.reason}</p>
                     </div>
                   </div>
