@@ -287,6 +287,14 @@ export default function ApplicationReview() {
                             </p>
                           )}
                         </div>
+                      ) : (app.paymentType === 'concession' || app.paymentType === 'incharge_concession') ? (
+                        <div>
+                          <p className="font-semibold text-green-700">{formatCurrency(app.fare)}</p>
+                          {app.fullFare && app.fullFare !== app.fare && (
+                            <p className="text-xs text-gray-400 line-through">{formatCurrency(app.fullFare)}</p>
+                          )}
+                          <p className="text-xs text-green-600">Concession fee</p>
+                        </div>
                       ) : formatCurrency(app.fare)}
                     </td>
                     <td><StatusBadge status={app.status} /></td>
