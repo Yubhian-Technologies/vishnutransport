@@ -96,6 +96,7 @@ const submitApplication = async (req, res) => {
     let resolvedPermissionId = null;
     let resolvedConcessionId = null;
     let concessionReason = null;
+    let concessionDiscount = null;
 
     if (isIncharge) {
       fare = Math.round(fullFare * 0.5);
@@ -125,6 +126,7 @@ const submitApplication = async (req, res) => {
       dueStatus = null;
       concessionReason = conc.reason;
       resolvedConcessionId = concDoc.id;
+      concessionDiscount = conc.concessionFee;
       await concDoc.ref.update({ used: true });
     }
 
@@ -165,6 +167,7 @@ const submitApplication = async (req, res) => {
       partialPermissionId: resolvedPermissionId,
       concessionPermissionId: resolvedConcessionId,
       concessionReason,
+      concessionDiscount,
       duePaymentProofUrl: null,
       duePaymentPublicId: null,
       duePaymentSubmittedAt: null,
@@ -203,6 +206,15 @@ const getMyApplication = async (req, res) => {
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''))
       .slice(0, 5);
+
+    // Fix old concession fare on the fly
+    apps.forEach(a => {
+      if ((a.paymentType === 'concession' || a.paymentType === 'incharge_concession') && a.concessionDiscount == null && a.fullFare) {
+        a.concessionDiscount = a.fare;
+        a.fare = Math.max(0, a.fullFare - a.fare);
+      }
+    });
+
     res.json(apps);
   } catch (error) {
     console.error('Get my application error:', error);
@@ -260,6 +272,22 @@ const getAllApplications = async (req, res) => {
     if (collegeId) all = all.filter(a => a.collegeId === collegeId);
 
     all = all.sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
+
+    // Fix old concession applications where fare was stored as the discount amount instead of amount-to-pay
+    const oldConcessions = all.filter(
+      a => (a.paymentType === 'concession' || a.paymentType === 'incharge_concession') && a.concessionDiscount == null && a.fullFare
+    );
+    if (oldConcessions.length > 0) {
+      const batch = db.batch();
+      oldConcessions.forEach(a => {
+        const discount = a.fare;
+        const amountToPay = Math.max(0, a.fullFare - discount);
+        batch.update(db.collection('applications').doc(a.id), { fare: amountToPay, concessionDiscount: discount });
+        a.concessionDiscount = discount;
+        a.fare = amountToPay;
+      });
+      batch.commit().catch(err => console.error('concession migration batch error:', err));
+    }
 
     // Remove stale rejected records for students who now have an active/confirmed application
     const rejectedStatuses = new Set([APPLICATION_STATUS.REJECTED_L1, APPLICATION_STATUS.REJECTED_L2]);
