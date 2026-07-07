@@ -166,7 +166,7 @@ export default function ApplicationForm() {
     watchedBoardingPointId === concessionPermission.boardingPointId;
 
   const fare =
-    watchedPaymentType === 'concession' && concessionApplies ? concessionPermission.concessionFee :
+    watchedPaymentType === 'concession' && concessionApplies ? Math.max(0, fullFare - concessionPermission.concessionFee) :
     watchedPaymentType === 'coordinator_partial' ? coordinatorPayNow :
     watchedPaymentType === 'partial' && partialFareAmt ? partialFareAmt :
     fullFare;
@@ -486,8 +486,8 @@ export default function ApplicationForm() {
                         <label className={`flex flex-col p-3 border rounded-lg cursor-pointer ${watchedPaymentType === 'concession' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
                           <input type="radio" {...register('paymentType')} value="concession" className="sr-only" />
                           <span className="font-medium text-sm text-green-800">Fee Concession</span>
-                          <span className="text-green-700 font-bold">{formatCurrency(concessionPermission.concessionFee)}</span>
-                          <span className="text-xs text-green-600 mt-0.5">Concession granted by coordinator</span>
+                          <span className="text-green-700 font-bold">{formatCurrency(Math.max(0, fullFare - concessionPermission.concessionFee))}</span>
+                          <span className="text-xs text-green-600 mt-0.5">Discount of {formatCurrency(concessionPermission.concessionFee)} applied</span>
                         </label>
                       )}
 
