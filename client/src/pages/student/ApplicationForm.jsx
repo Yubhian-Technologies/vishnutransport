@@ -314,6 +314,7 @@ export default function ApplicationForm() {
                         <div className="select-wrapper">
                           <select {...register('academicYear', { validate: v => v && v.length > 0 || 'Academic year required' })} className={`select ${errors.academicYear ? 'input-error' : ''}`}>
                             <option value="">Select Year</option>
+                            <option value="1">1st Year (2026-2027)</option>
                             <option value="2">2nd Year</option>
                             <option value="3">3rd Year</option>
                             <option value="4">4th Year</option>
