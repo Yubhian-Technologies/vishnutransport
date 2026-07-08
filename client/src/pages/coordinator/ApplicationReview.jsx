@@ -15,6 +15,7 @@ const STATUS_TABS = [
   { label: 'Sent to Accounts', value: 'pending_accounts' },
   { label: 'Confirmed', value: 'approved_final' },
   { label: 'Rejected L1', value: 'rejected_l1' },
+  { label: 'Rejected L2', value: 'rejected_l2' },
   { label: 'All', value: '' },
 ];
 
