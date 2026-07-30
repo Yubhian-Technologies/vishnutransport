@@ -43,6 +43,8 @@ export default function ApplicationForm() {
   const base = role === 'faculty' ? '/faculty' : '/student';
   const [step, setStep] = useState(0);
   const [paymentFile, setPaymentFile] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [ackTimings, setAckTimings] = useState(false);
   const [ackRules, setAckRules] = useState(false);
@@ -182,7 +184,27 @@ export default function ApplicationForm() {
     maxFiles: 1,
   });
 
+  const onDropPhoto = useCallback((acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setProfilePhoto(file);
+      setProfilePhotoPreview(URL.createObjectURL(file));
+    }
+  }, []);
+
+  const { getRootProps: getPhotoRootProps, getInputProps: getPhotoInputProps, isDragActive: isPhotoDragActive } = useDropzone({
+    onDrop: onDropPhoto,
+    accept: { 'image/jpeg': [], 'image/png': [], 'image/webp': [] },
+    maxSize: 3145728, // 3 MB
+    maxFiles: 1,
+  });
+
   const onSubmit = async (data) => {
+    if (!profilePhoto) {
+      toast.error('Please upload your profile photo');
+      setStep(0);
+      return;
+    }
     if (!paymentFile) {
       toast.error('Please upload payment proof');
       return;
@@ -194,6 +216,7 @@ export default function ApplicationForm() {
       formData.append('name', data.nameAsPerSSC);
       formData.append('email', currentUser.email);
       formData.append('college', selectedCollege?.name || '');
+      formData.append('profilePhoto', profilePhoto);
       formData.append('paymentProof', paymentFile);
       if (data.paymentType === 'coordinator_partial' && partialPermission) {
         formData.append('partialPermissionId', partialPermission.id);
@@ -229,7 +252,12 @@ export default function ApplicationForm() {
   const nextStep = async () => {
     const fields = STEP_FIELDS[step];
     const valid = fields.length === 0 || await trigger(fields);
-    if (valid) setStep(s => Math.min(s + 1, STEPS.length - 1));
+    if (!valid) return;
+    if (step === 0 && !profilePhoto) {
+      toast.error('Please upload your profile photo');
+      return;
+    }
+    setStep(s => Math.min(s + 1, STEPS.length - 1));
   };
   const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
@@ -403,6 +431,39 @@ export default function ApplicationForm() {
                       <input {...register('parentPhone')} type="tel" placeholder="+91 98765 43210" className={`input ${errors.parentPhone ? 'input-error' : ''}`} />
                       {errors.parentPhone && <p className="text-red-500 text-xs mt-1">{errors.parentPhone.message}</p>}
                     </div>
+                  </div>
+                </div>
+
+                {/* Profile Photo */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-1 border-b border-gray-100">Profile Photo <span className="text-red-500">*</span></h3>
+                  <div className="flex items-start gap-4">
+                    {profilePhotoPreview ? (
+                      <div className="relative flex-shrink-0">
+                        <img src={profilePhotoPreview} alt="Profile preview" className="w-24 h-24 rounded-full object-cover border-2 border-primary-300" />
+                        <button
+                          type="button"
+                          onClick={() => { setProfilePhoto(null); setProfilePhotoPreview(null); }}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        {...getPhotoRootProps()}
+                        className={`flex-1 border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors
+                          ${isPhotoDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
+                      >
+                        <input {...getPhotoInputProps()} />
+                        <Upload size={24} className="mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600">Drop a passport-size photo or click to browse</p>
+                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · max 3 MB</p>
+                      </div>
+                    )}
+                    {!profilePhotoPreview && (
+                      <p className="text-xs text-amber-600 mt-1 flex-1">A clear face photo is required for your bus pass and attendance verification.</p>
+                    )}
                   </div>
                 </div>
               </div>

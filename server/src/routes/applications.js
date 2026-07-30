@@ -20,7 +20,7 @@ router.post(
   '/',
   verifyToken,
   requireRole(ROLES.STUDENT, ROLES.FACULTY, ROLES.BUS_INCHARGE),
-  upload.single('paymentProof'),
+  upload.fields([{ name: 'paymentProof', maxCount: 1 }, { name: 'profilePhoto', maxCount: 1 }]),
   submitApplication
 );
 

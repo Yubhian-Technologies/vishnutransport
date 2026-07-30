@@ -84,10 +84,20 @@ const submitApplication = async (req, res) => {
 
     let paymentProofUrl = null;
     let paymentProofPublicId = null;
-    if (req.file) {
-      const result = await uploadToCloud(req.file, 'payment-proofs');
+    const paymentFile = req.files?.paymentProof?.[0] || req.file;
+    if (paymentFile) {
+      const result = await uploadToCloud(paymentFile, 'payment-proofs');
       paymentProofUrl = result.url;
       paymentProofPublicId = result.publicId;
+    }
+
+    let profilePhotoUrl = null;
+    let profilePhotoPublicId = null;
+    const photoFile = req.files?.profilePhoto?.[0];
+    if (photoFile) {
+      const result = await uploadToCloud(photoFile, 'profile-photos');
+      profilePhotoUrl = result.url;
+      profilePhotoPublicId = result.publicId;
     }
 
     const fullFare = bp.fare != null ? bp.fare : route.fare;
@@ -180,6 +190,8 @@ const submitApplication = async (req, res) => {
       dueReviewedAt: null,
       paymentProofUrl,
       paymentProofPublicId,
+      profilePhotoUrl,
+      profilePhotoPublicId,
       utrNumber: utrNumber || '',
       status: APPLICATION_STATUS.PENDING_COORDINATOR,
       seatNumber: null,
@@ -194,6 +206,12 @@ const submitApplication = async (req, res) => {
     };
 
     const docRef = await db.collection('applications').add(appData);
+
+    // Save profile photo to user's Firestore document so attendance scanner picks it up
+    if (profilePhotoUrl) {
+      await db.collection('users').doc(uid).set({ photoURL: profilePhotoUrl }, { merge: true });
+    }
+
     res.status(201).json({ id: docRef.id, ...appData, message: 'Application submitted successfully' });
   } catch (error) {
     console.error('Submit application error:', error);
