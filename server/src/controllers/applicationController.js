@@ -37,10 +37,14 @@ const submitApplication = async (req, res) => {
     const {
       name, email, regNo, aadhaar, branch, college, collegeId,
       routeId, boardingPointId, paymentType, partialPermissionId, concessionPermissionId,
+      academicYear,
     } = req.body;
 
     const isIncharge = req.user.role === 'bus_incharge';
-    if (!name || !routeId || !boardingPointId || (!isIncharge && (!regNo || !collegeId))) {
+    // Year 1 students may not have a reg no yet — they use Aadhaar instead
+    const isFirstYear = !isIncharge && String(academicYear) === '1';
+    const regNoRequired = !isIncharge && !isFirstYear;
+    if (!name || !routeId || !boardingPointId || (!isIncharge && !collegeId) || (regNoRequired && !regNo)) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
