@@ -290,6 +290,39 @@ export default function ApplicationForm() {
           <div className="card">
             {step === 0 && (
               <div className="space-y-5">
+                {/* Profile Photo */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-1 border-b border-gray-100">Profile Photo <span className="text-red-500">*</span></h3>
+                  <div className="flex items-start gap-4">
+                    {profilePhotoPreview ? (
+                      <div className="relative flex-shrink-0">
+                        <img src={profilePhotoPreview} alt="Profile preview" className="w-24 h-24 rounded-full object-cover border-2 border-primary-300" />
+                        <button
+                          type="button"
+                          onClick={() => { setProfilePhoto(null); setProfilePhotoPreview(null); }}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        {...getPhotoRootProps()}
+                        className={`flex-1 border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors
+                          ${isPhotoDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
+                      >
+                        <input {...getPhotoInputProps()} />
+                        <Upload size={24} className="mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600">Drop a passport-size photo or click to browse</p>
+                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · max 3 MB</p>
+                      </div>
+                    )}
+                    {!profilePhotoPreview && (
+                      <p className="text-xs text-amber-600 mt-1 flex-1">A clear face photo is required for your bus pass and attendance verification.</p>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-1 border-b border-gray-100">Personal Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -434,38 +467,6 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* Profile Photo */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-1 border-b border-gray-100">Profile Photo <span className="text-red-500">*</span></h3>
-                  <div className="flex items-start gap-4">
-                    {profilePhotoPreview ? (
-                      <div className="relative flex-shrink-0">
-                        <img src={profilePhotoPreview} alt="Profile preview" className="w-24 h-24 rounded-full object-cover border-2 border-primary-300" />
-                        <button
-                          type="button"
-                          onClick={() => { setProfilePhoto(null); setProfilePhotoPreview(null); }}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        {...getPhotoRootProps()}
-                        className={`flex-1 border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors
-                          ${isPhotoDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-primary-400'}`}
-                      >
-                        <input {...getPhotoInputProps()} />
-                        <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-600">Drop a passport-size photo or click to browse</p>
-                        <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · max 3 MB</p>
-                      </div>
-                    )}
-                    {!profilePhotoPreview && (
-                      <p className="text-xs text-amber-600 mt-1 flex-1">A clear face photo is required for your bus pass and attendance verification.</p>
-                    )}
-                  </div>
-                </div>
               </div>
             )}
 
