@@ -48,7 +48,7 @@ export function useAttendanceNotification(currentUser, role) {
           );
         }
       });
-    });
+    }, () => { /* permission-denied — rules not yet updated, fail silently */ });
 
     return () => {
       unsubscribe();
