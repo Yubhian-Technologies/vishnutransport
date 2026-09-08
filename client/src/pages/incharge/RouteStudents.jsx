@@ -38,7 +38,7 @@ export default function RouteStudents() {
 
   const { data: appsData, isLoading } = useQuery({
     queryKey: ['applications-incharge', myRoute?.id, 'approved_final'],
-    queryFn: () => applicationsAPI.getAll({ status: 'approved_final' }),
+    queryFn: () => applicationsAPI.getAll({ status: 'approved_final', limit: 1000 }),
     enabled: !!myRoute,
   });
 

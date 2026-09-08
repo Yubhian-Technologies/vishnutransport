@@ -180,7 +180,7 @@ export default function AttendanceScanner() {
 
   const { data: studentsData, isLoading: studentsLoading } = useQuery({
     queryKey: ['confirmed-students-incharge'],
-    queryFn: () => applicationsAPI.getAll({ status: 'approved_final' }),
+    queryFn: () => applicationsAPI.getAll({ status: 'approved_final', limit: 1000 }),
     enabled: activeTab === 'manual',
   });
 

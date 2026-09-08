@@ -21,7 +21,7 @@ export default function InchargeDashboard() {
 
   const { data: appsData, isLoading } = useQuery({
     queryKey: ['applications', 'route', myRoute?.id],
-    queryFn: () => applicationsAPI.getAll({ routeId: myRoute.id, status: 'approved_final' }),
+    queryFn: () => applicationsAPI.getAll({ routeId: myRoute.id, status: 'approved_final', limit: 1000 }),
     enabled: !!myRoute?.id,
   });
 
