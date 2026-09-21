@@ -58,6 +58,7 @@ export const boardingPointsAPI = {
 export const applicationsAPI = {
   submit: (formData) => api.post('/applications', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 0,
   }),
   getMy: () => api.get('/applications/my'),
   getAll: (params) => api.get('/applications', { params }),
@@ -70,6 +71,7 @@ export const applicationsAPI = {
     if (utrNumber) form.append('utrNumber', utrNumber);
     return api.post(`/applications/${id}/payment-proof`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 0,
     });
   },
   submitDuePayment: (id, file, utrNumber) => {
@@ -78,6 +80,7 @@ export const applicationsAPI = {
     if (utrNumber) form.append('dueUtrNumber', utrNumber);
     return api.post(`/applications/${id}/due-payment`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 0,
     });
   },
   dueReview: (id, data) => api.patch(`/applications/${id}/due-review`, data),
@@ -90,7 +93,7 @@ export const profileAPI = {
   uploadPhoto: (file) => {
     const form = new FormData();
     form.append('photo', file);
-    return api.post('/users/me/photo', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return api.post('/users/me/photo', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 });
   },
 };
 
